@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	check := []string{
 		"a",
 		"b",
@@ -69,4 +71,5 @@ func main() {
 
 	checksum := two * three
 	fmt.Println(checksum)
+	fmt.Println(time.Since(start))
 }

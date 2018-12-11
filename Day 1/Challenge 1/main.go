@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	frequency := 0
 
 	intputFile, err := os.Open("input.txt")
@@ -20,19 +22,18 @@ func main() {
 
 	scanner := bufio.NewScanner(intputFile)
 
-	for !found {
-		for scanner.Scan() {
-			line := scanner.Text()
+	for scanner.Scan() {
+		line := scanner.Text()
 
-			i, err := strconv.Atoi(line)
+		i, err := strconv.Atoi(line)
 
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			frequency += i
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		fmt.Println(frequency)
+		frequency += i
 	}
+
+	fmt.Println(frequency)
+	fmt.Println(time.Since(start))
 }

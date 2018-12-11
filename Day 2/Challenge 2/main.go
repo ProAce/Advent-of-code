@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 func compareStrings(input string) (int, error) {
@@ -44,6 +45,7 @@ func compareStrings(input string) (int, error) {
 }
 
 func main() {
+	start := time.Now()
 	intputFile, err := os.Open("input.txt")
 
 	if err != nil {
@@ -77,4 +79,5 @@ func main() {
 	}
 
 	fmt.Println(common)
+	fmt.Println(time.Since(start))
 }

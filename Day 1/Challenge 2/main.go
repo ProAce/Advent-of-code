@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	frequency := 0
 	found := false
 	var outputRec []int
@@ -51,4 +53,5 @@ func main() {
 			fmt.Println(frequency)
 		}
 	}
+	fmt.Println(time.Since(start))
 }

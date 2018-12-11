@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func parseInput(input string) (id, x, y, sizeX, sizeY int) {
@@ -27,6 +28,7 @@ func parseInput(input string) (id, x, y, sizeX, sizeY int) {
 }
 
 func main() {
+	start := time.Now()
 	grid := [1000][1000]int{}
 
 	intputFile, err := os.Open("input.txt")
@@ -88,4 +90,5 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(time.Since(start))
 }
