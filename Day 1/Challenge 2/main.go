@@ -50,7 +50,6 @@ func main() {
 			}
 
 			outputRec = append(outputRec, frequency)
-			fmt.Println(frequency)
 		}
 	}
 	fmt.Println(time.Since(start))
