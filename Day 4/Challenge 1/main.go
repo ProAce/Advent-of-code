@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+var data []string
+var guards [][]int
+
 func parseData(input string) (t time.Time, id int, asleep bool) {
 	input = strings.TrimPrefix(input, "[")
 	inputTime := strings.Split(input, "]")
@@ -33,11 +36,47 @@ func parseData(input string) (t time.Time, id int, asleep bool) {
 	return t, id, asleep
 }
 
+func countOnes(id int) (mins int) {
+	for i := 0; i < len(guards); i++ {
+		if guards[i][0] == id {
+			for j := 1; j < 61; j++ {
+				if guards[i][j] == 1 {
+					mins++
+				}
+			}
+		}
+	}
+
+	return mins
+}
+
+func whichMin(id int) (min int) {
+	b := make([]int, 60)
+
+	for i := 0; i < len(guards); i++ {
+		if guards[i][0] == id {
+			for j := 1; j < 61; j++ {
+				if guards[i][j] == 1 {
+					b[j-1]++
+				}
+			}
+		}
+	}
+
+	count := 0
+
+	for i := 0; i < len(b); i++ {
+		if b[i] > count {
+			count = b[i]
+			min = i
+		}
+	}
+
+	return min
+}
+
 func main() {
 	start := time.Now()
-
-	data := []string{}
-	guards := []int{}
 
 	intputFile, err := os.Open("input.txt")
 
@@ -53,9 +92,6 @@ func main() {
 	}
 
 	sort.Strings(data)
-	// for i := 0; i < len(data); i++ {
-	// 	fmt.Println(data[i])
-	// }
 
 	guardID := 0
 	startSleep := 0
@@ -72,17 +108,49 @@ func main() {
 		if (asleep == false) && (id == 0) {
 			endSleep := t.Minute()
 			b := make([]int, 61)
-			b = append(b, guardID)
+			b[0] = guardID
 			for j := 0; j < 60; j++ {
 				if (j >= startSleep) && (j < endSleep) {
-					guard[][j] = 1
+					b[j+1] = 1
 				} else {
-					guard[][j] = 0
+					b[j+1] = 0
 				}
 			}
+			guards = append(guards, b)
 		}
-
 	}
+
+	//Make list of all the guardID's
+	b := []int{}
+
+	for i := 0; i < len(guards); i++ {
+		add := true
+		for j := 0; j < len(b); j++ {
+			if guards[i][0] == b[j] {
+				add = false
+			}
+		}
+		if add == true {
+			b = append(b, guards[i][0])
+		}
+	}
+
+	id := 0
+	mostMins := 0
+
+	for i := 0; i < len(b); i++ {
+		mins := countOnes(b[i])
+		if mins > mostMins {
+			mostMins = mins
+			id = b[i]
+		}
+	}
+
+	minute := whichMin(id)
+
+	output := minute * id
+
+	fmt.Println(id, mostMins, minute, output)
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
