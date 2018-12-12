@@ -9,6 +9,27 @@ import (
 	"time"
 )
 
+func reactPolymer(input string) (out string) {
+	oldLength := len(input)
+	newLength := 0
+
+	for oldLength != newLength {
+		oldLength = len(input)
+		for j := 65; j <= 90; j++ {
+			upperChar := string(j)
+			lowerChar := strings.ToLower(upperChar)
+
+			input = strings.Replace(input, upperChar+lowerChar, "", -1)
+			input = strings.Replace(input, lowerChar+upperChar, "", -1)
+		}
+		newLength = len(input)
+	}
+
+	out = input
+
+	return out
+}
+
 func main() {
 	start := time.Now()
 
@@ -31,21 +52,26 @@ func main() {
 	}
 
 	for i := 0; i < len(output); i++ {
-		oldLength := len(output[i])
-		newLength := 0
+		length := len(output[i])
+		letter := ""
 
-		for oldLength != newLength {
-			oldLength = len(output[i])
-			for j := 65; j <= 90; j++ {
-				upperChar := string(j)
-				lowerChar := strings.ToLower(upperChar)
+		for j := 65; j <= 90; j++ {
+			removeUpper := string(j)
+			removeLower := strings.ToLower(removeUpper)
 
-				output[i] = strings.Replace(output[i], upperChar+lowerChar, "", -1)
-				output[i] = strings.Replace(output[i], lowerChar+upperChar, "", -1)
+			temp := strings.Replace(output[i], removeLower, "", -1)
+			temp = strings.Replace(temp, removeUpper, "", -1)
+
+			out := reactPolymer(temp)
+
+			if len(out) < length {
+				length = len(out)
+				letter = removeUpper + removeLower
 			}
-			newLength = len(output[i])
 		}
-		fmt.Println(len(output[i]))
+
+		fmt.Println(length, letter)
 	}
+
 	fmt.Println(time.Since(start))
 }
