@@ -12,10 +12,9 @@ import (
 func main() {
 	start := time.Now()
 	frequency := 0
-	found := false
 	var outputRec []int
 
-	for !found {
+	for {
 		intputFile, err := os.Open("input.txt")
 
 		if err != nil {
@@ -39,18 +38,13 @@ func main() {
 
 			for i := 0; i < len(outputRec); i++ {
 				if frequency == outputRec[i] {
-					found = true
 					fmt.Println(frequency)
-					break
+					fmt.Println(time.Since(start))
+					return
 				}
-			}
-
-			if found == true {
-				break
 			}
 
 			outputRec = append(outputRec, frequency)
 		}
 	}
-	fmt.Println(time.Since(start))
 }
