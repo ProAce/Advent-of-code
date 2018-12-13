@@ -55,11 +55,13 @@ func main() {
 		length := len(output[i])
 		letter := ""
 
+		reactedInput := reactPolymer(output[i])
+
 		for j := 65; j <= 90; j++ {
 			removeUpper := string(j)
 			removeLower := strings.ToLower(removeUpper)
 
-			temp := strings.Replace(output[i], removeLower, "", -1)
+			temp := strings.Replace(reactedInput, removeLower, "", -1)
 			temp = strings.Replace(temp, removeUpper, "", -1)
 
 			out := reactPolymer(temp)
