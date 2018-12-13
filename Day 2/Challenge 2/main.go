@@ -29,6 +29,9 @@ func compareStrings(input string) (int, error) {
 			if string(input[i]) != string(compareInput[i]) {
 				mismatched++
 				index = i
+				if mismatched > 1 {
+					break
+				}
 			}
 		}
 
