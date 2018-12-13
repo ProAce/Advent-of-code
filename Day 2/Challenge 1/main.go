@@ -11,34 +11,6 @@ import (
 
 func main() {
 	start := time.Now()
-	check := []string{
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"f",
-		"g",
-		"h",
-		"i",
-		"j",
-		"k",
-		"l",
-		"m",
-		"n",
-		"o",
-		"p",
-		"q",
-		"r",
-		"s",
-		"t",
-		"u",
-		"v",
-		"w",
-		"x",
-		"y",
-		"z",
-	}
 
 	var two int16
 	var three int16
@@ -58,15 +30,17 @@ func main() {
 		found2 := false
 		found3 := false
 
-		for i := 0; i < len(check); i++ {
-			if (strings.Count(line, check[i]) == 2) && (found2 == false) {
+		for i := 65; i <= 90; i++ {
+			check := strings.ToLower(string(i))
+			if (strings.Count(line, check) == 2) && (found2 == false) {
 				two++
 				found2 = true
-			} else if (strings.Count(line, check[i]) == 3) && (found3 == false) {
+			} else if (strings.Count(line, check) == 3) && (found3 == false) {
 				three++
 				found3 = true
 			}
 		}
+
 	}
 
 	checksum := two * three
