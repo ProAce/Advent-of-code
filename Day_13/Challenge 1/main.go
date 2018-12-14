@@ -207,9 +207,6 @@ func main() {
 
 	carts = getCartPositions(trackMap)
 
-	fmt.Println(len(trackMap), len(trackMap[1]))
-	fmt.Println(carts)
-
 	for !found {
 		carts = updateCartsPositions(carts, trackMap)
 		found, coordinates = colisionDetect(carts)
