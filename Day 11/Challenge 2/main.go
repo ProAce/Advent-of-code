@@ -45,7 +45,6 @@ func countPowerLevel(input [][]int, gridSize int) (coordinates []int) {
 	count := 0
 
 	for a := 1; a < gridSize; a++ {
-		fmt.Println(a)
 		for i := len(input) - 1; i > 0+a; i-- {
 			for j := len(input[i]) - 1; j > 0+a; j-- {
 				count = input[i][j] - input[i-a][j] - input[i][j-a] + input[i-a][j-a]
