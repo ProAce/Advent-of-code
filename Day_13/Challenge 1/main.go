@@ -24,13 +24,48 @@ func checkDirection(trackMap []string) (int, int) {
 
 func updateCartsPositions(cartPositions [][]int, trackMap []string) [][]int {
 	for i := 0; i < len(cartPositions); i++ {
+		x := cartPositions[i][0]
+		y := cartPositions[i][1]
+
 		switch cartPositions[i][2] {
 		//Direction: 0 = up, 1 = right, 2 = down, 3 = left
-		case 0:
 
+		case 0:
+			switch string(trackMap[x-1][y]) {
+			case "\\":
+				cartPositions[i][2] = 3
+			case "/":
+				cartPositions[i][2] = 1
+			case "+":
+				switch cartPositions[i][3] {
+				case 0:
+					cartPositions
+				case 1:
+				case 2:
+				}
+			}
+			cartPositions[i][0] = x + 1
 		case 1:
+			switch string(trackMap[x][y+1]) {
+			case "-":
+			case "\\":
+			case "/":
+			case "+":
+			}
 		case 2:
+			switch string(trackMap[x+1][y]) {
+			case "|":
+			case "\\":
+			case "/":
+			case "+":
+			}
 		case 3:
+			switch string(trackMap[x][y] - 1) {
+			case "-":
+			case "\\":
+			case "/":
+			case "+":
+			}
 		}
 	}
 
