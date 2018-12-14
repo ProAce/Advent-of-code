@@ -7,13 +7,15 @@ import (
 
 var toFind = []int{3, 6, 0, 7, 8, 1}
 
-func newRecipes(elf1, elf2 int, input []int) (int, int, []int) {
+func newRecipes(elf1, elf2 int, input []int) (bool, int, int, []int) {
 	// fmt.Println(elf1, elf2, input)
 	temp := input[elf1] + input[elf2]
+	twice := false
 	if temp/10 == 0 {
 		input = append(input, temp)
 	} else {
 		input = append(input, temp/10, temp%10)
+		twice = true
 	}
 
 	temp = elf1 + input[elf1] + 1
@@ -28,10 +30,10 @@ func newRecipes(elf1, elf2 int, input []int) (int, int, []int) {
 	}
 	elf2 = temp
 
-	return elf1, elf2, input
+	return twice, elf1, elf2, input
 }
 
-func check(input []int) bool {
+func checkOne(input []int) bool {
 	toCheck := input[len(input)-len(toFind):]
 
 	for i, v := range toCheck {
@@ -39,6 +41,19 @@ func check(input []int) bool {
 			return false
 		}
 	}
+
+	return true
+}
+
+func checkTwo(input []int) bool {
+	toCheck := input[len(input)-len(toFind)-1 : len(input)-1]
+
+	for i, v := range toCheck {
+		if v != toFind[i] {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -49,15 +64,33 @@ func main() {
 	input := []int{3, 7}
 	elf1 := 0
 	elf2 := 1
+	twice := false
 
 	for !found {
-		elf1, elf2, input = newRecipes(elf1, elf2, input)
+		twice, elf1, elf2, input = newRecipes(elf1, elf2, input)
 		if len(input) > len(toFind) {
-			found = check(input)
+			found = checkOne(input)
+			if twice == true {
+				found = checkTwo(input)
+			}
 		}
 	}
 
-	fmt.Println(len(input) - len(toFind))
+	if twice == false {
+		for i := len(input) - len(toFind); i < len(input); i++ {
+			fmt.Print(input[i])
+		}
+
+		fmt.Println("")
+		fmt.Println(len(input) - len(toFind))
+	} else {
+		for i := len(input) - len(toFind) - 1; i < len(input)-1; i++ {
+			fmt.Print(input[i])
+		}
+
+		fmt.Println("")
+		fmt.Println(len(input) - len(toFind) - 1)
+	}
 
 	fmt.Println(time.Since(start))
 }
