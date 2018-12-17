@@ -3,21 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"image"
-	"image/color"
-	"image/gif"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 )
-
-var images []*image.Paletted
-var delay []int
-var palette = []color.Color{
-	color.RGBA{0xff, 0xff, 0xff, 0xff},
-}
 
 func parseData(input string) (output []int) {
 	input = strings.TrimPrefix(input, "position=<")
@@ -61,10 +52,9 @@ func updatePos(positions [][]int, iterationsize int) (output [][]int, offset []i
 		if positions[i][1] > yMax {
 			yMax = positions[i][1]
 		}
-		if positions[i][1] < xMin {
+		if positions[i][1] < yMin {
 			yMin = positions[i][1]
 		}
-
 	}
 
 	offset = []int{xMax, xMin, yMax, yMin}
@@ -72,26 +62,23 @@ func updatePos(positions [][]int, iterationsize int) (output [][]int, offset []i
 	return positions, offset
 }
 
-func drawImageFrame(datapoints [][]int, offset []int, width int, height int) {
-	img := image.NewPaletted(image.Rect(0, 0, width, height), palette)
-	for i := 0; i < len(datapoints); i++ {
-		x := datapoints[i][0]
-		y := datapoints[i][1]
+func drawInTerminal(datapoints [][]int, offset []int) {
 
-		img.Set(x, y, palette[0])
+	for i := offset[3]; i <= offset[2]; i++ {
+		for j := offset[1]; j <= offset[0]; j++ {
+			print := false
+			for k := 0; k < len(datapoints); k++ {
+				if datapoints[k][0] == j && datapoints[k][1] == i && print == false {
+					print = true
+					fmt.Print("#")
+				}
+			}
+			if print == false {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println("")
 	}
-
-	images = append(images, img)
-	delay = append(delay, 0)
-}
-
-func createGif() {
-	f, _ := os.Create("rgb.gif")
-	defer f.Close()
-	gif.EncodeAll(f, &gif.GIF{
-		Image: images,
-		Delay: delay,
-	})
 }
 
 func main() {
@@ -113,31 +100,22 @@ func main() {
 		positions = append(positions, parseData(scanner.Text()))
 	}
 
-	positions, offset = updatePos(positions, 100)
+	fmt.Println(offset)
 
-	for offset[0]-offset[1] > 1000 {
-		positions, offset = updatePos(positions, 100)
-	}
+	count := 0
+	second := 0
 
-	for offset[0]-offset[1] > 100 {
-		positions, offset = updatePos(positions, 10)
-	}
-
-	width := offset[0] - offset[1]
-	height := offset[2] - offset[3]
-
-	fmt.Println(width, height, offset)
-
-	for offset[0]-offset[1] < 100 {
-		positions, _ = updatePos(positions, 1)
-
-		drawImageFrame(positions, offset, width, height)
-		if offset[0]-offset[1] < 10 {
-			break
+	for count < 2 {
+		positions, offset = updatePos(positions, 1)
+		second++
+		if offset[2]-offset[3] < 25 {
+			fmt.Println(offset)
+			drawInTerminal(positions, offset)
+			count++
 		}
 	}
 
-	createGif()
+	fmt.Println(second)
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
