@@ -47,14 +47,14 @@ func iterateCommands(input string) string {
 	return output
 }
 
-func outcome(input string, offset int) (count int) {
+func outcome(input string) (count int) {
 	indexShift := 50000000000 - 200
 	x := []rune("#")
 	count = 0
 
 	for i, n := range input {
 		if n == x[0] {
-			count += (i - offset) + indexShift
+			count += (i - 4) + indexShift
 		}
 	}
 
@@ -86,17 +86,13 @@ func main() {
 		line++
 	}
 
-	// fmt.Println(commands)
-	fmt.Println(state)
-
 	//Visually observed that after about 200 iterations the outcome is stable
 	//For compatibility this should be decided by a function #ToDo
 	for i := 0; i < 200; i++ {
 		state = iterateCommands(state)
 	}
 
-	fmt.Println(state)
-	fmt.Println(outcome(state, 4))
+	fmt.Println(outcome(state))
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
