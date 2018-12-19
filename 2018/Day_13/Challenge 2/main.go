@@ -102,18 +102,18 @@ func updateCartsPositions(cartPositions [][]int, trackMap []string) [][]int {
 }
 
 func drawTracks(trackMap []string, carts [][]int) {
-	for i := 0; i < len(trackMap[0]); i++ {
-		fmt.Print(i / 100)
-	}
-	fmt.Println("")
-	for i := 0; i < len(trackMap[0]); i++ {
-		fmt.Print(i % 100 / 10)
-	}
-	fmt.Println("")
-	for i := 0; i < len(trackMap[0]); i++ {
-		fmt.Print(i % 10)
-	}
-	fmt.Println("")
+	// for i := 0; i < len(trackMap[0]); i++ {
+	// 	fmt.Print(i / 100)
+	// }
+	// fmt.Println("")
+	// for i := 0; i < len(trackMap[0]); i++ {
+	// 	fmt.Print(i % 100 / 10)
+	// }
+	// fmt.Println("")
+	// for i := 0; i < len(trackMap[0]); i++ {
+	// 	fmt.Print(i % 10)
+	// }
+	// fmt.Println("")
 
 	for i := 0; i < len(trackMap); i++ {
 		for j := 0; j < len(trackMap[i]); j++ {
@@ -147,27 +147,25 @@ func getCartPositions(trackMap []string) [][]int {
 				y = j
 				direction = 0
 				cartPositions = append(cartPositions, []int{x, y, direction, 0})
-				trackMap[i] = strings.Replace(trackMap[i], "^", "|", 1)
+				trackMap[i] = strings.Replace(trackMap[i], "^", "|", 1) //could be removed
 			case ">":
 				x = i
 				y = j
 				direction = 1
 				cartPositions = append(cartPositions, []int{x, y, direction, 0})
-				trackMap[i] = strings.Replace(trackMap[i], ">", "-", 1)
+				trackMap[i] = strings.Replace(trackMap[i], ">", "-", 1) //could be removed
 			case "v":
 				x = i
 				y = j
 				direction = 2
 				cartPositions = append(cartPositions, []int{x, y, direction, 0})
-				trackMap[i] = strings.Replace(trackMap[i], "v", "|", 1)
+				trackMap[i] = strings.Replace(trackMap[i], "v", "|", 1) //could be removed
 			case "<":
 				x = i
 				y = j
 				direction = 3
 				cartPositions = append(cartPositions, []int{x, y, direction, 0})
-				trackMap[i] = strings.Replace(trackMap[i], "<", "-", 1)
-			default:
-
+				trackMap[i] = strings.Replace(trackMap[i], "<", "-", 1) //could be removed
 			}
 		}
 	}
@@ -175,19 +173,48 @@ func getCartPositions(trackMap []string) [][]int {
 }
 
 func colisionDetect(cartPositions [][]int) [][]int {
-	if len(cartPositions) > 1 {
-		for i := 0; i < len(cartPositions); i++ {
+	for i := 0; i < len(cartPositions); i++ {
+		if cartPositions[i][2] != -1 {
+			x1 := cartPositions[i][0]
+			y1 := cartPositions[i][1]
 			for j := i + 1; j < len(cartPositions); j++ {
+				if cartPositions[j][2] != -1 {
+					x2 := cartPositions[j][0]
+					y2 := cartPositions[j][1]
+					//check -->-<-- collision
+					if x1 == x2 && y1 == y2 {
+						cartPositions[i][2] = -1
+						cartPositions[j][2] = -1
+					}
 
-				//check -->-<-- collision
-				if cartPositions[i][0] == cartPositions[j][0] && cartPositions[i][1] == cartPositions[j][1] {
-					for k := 0; k < 4; k++ {
-						cartPositions[i][k] = -1
-						cartPositions[j][k] = -1
+					//check --<>-- collision
+					switch cartPositions[i][2] {
+					case 0: //up
+						if x1 == x2-1 && y1 == y2 && cartPositions[j][2] == 2 {
+							fmt.Println("upwards collision")
+							cartPositions[i][2] = -1
+							cartPositions[j][2] = -1
+						}
+					case 1: //right
+						if x1 == x2 && y1 == y2+1 && cartPositions[j][2] == 3 {
+							fmt.Println("right collision")
+							cartPositions[i][2] = -1
+							cartPositions[j][2] = -1
+						}
+					case 2: //down
+						if x1 == x2+1 && y1 == y2 && cartPositions[j][2] == 0 {
+							fmt.Println("downwards collision")
+							cartPositions[i][2] = -1
+							cartPositions[j][2] = -1
+						}
+					case 3: //left
+						if x1 == x2 && y1 == y2-1 && cartPositions[j][2] == 1 {
+							fmt.Println("left collision")
+							cartPositions[i][2] = -1
+							cartPositions[j][2] = -1
+						}
 					}
 				}
-				//check --><-- collision
-
 			}
 		}
 	}
@@ -197,10 +224,9 @@ func colisionDetect(cartPositions [][]int) [][]int {
 func checkCarts(cartPositions [][]int) (bool, []int) {
 	count := 0
 	id := 0
-	// fmt.Println(cartPositions)
+	//change 2D int to map[int]int #ToDo
 	for i := 0; i < len(cartPositions); i++ {
-		// fmt.Println(cartPositions[i])
-		if cartPositions[i][0] > -1 {
+		if cartPositions[i][2] > -1 {
 			id = i
 			count++
 			if count > 1 {
@@ -239,8 +265,6 @@ func main() {
 
 	carts = getCartPositions(trackMap)
 
-	fmt.Println(carts)
-
 	for !found {
 		count++
 		carts = updateCartsPositions(carts, trackMap)
@@ -249,7 +273,6 @@ func main() {
 	}
 
 	fmt.Println(count)
-	fmt.Println(carts)
 	fmt.Println(coordinates[0], coordinates[1])
 
 	fmt.Println(time.Since(start))
