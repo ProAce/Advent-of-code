@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -40,23 +41,61 @@ func buildGrid(input [][]int) (output [][]int, offset []int) {
 	return output, offset
 }
 
-func fillGrid(offset []int, grid [][]int, input [][]int) (outputGrid [][]int) {
+func fillGrid(offset []int, grid [][]int, input [][]int) ([][]int, int) {
 
 	for i := 0; i < len(input); i++ {
 		x := input[i][1] - offset[0]
+		input[i][1] = x
 		y := input[i][2] - offset[1]
+		input[i][2] = y
 		// fmt.Println(x, y)
-		grid[x][y] = input[i][0]
-
+		if x == 0 || y == 0 || x == len(grid)-1 || y == len(grid[0])-1 {
+			grid[x][y] = -1
+		} else {
+			grid[x][y] = input[i][0]
+		}
 	}
 
-	outputGrid = grid
-	return outputGrid
+	tilesLessThen := 0
+	for i := 0; i < len(grid); i++ {
+		for j := 0; j < len(grid[i]); j++ {
+			minimumDistance := len(grid) + len(grid[i])
+			minimumID := 0
+			sumDistance := 0
+			for k := 0; k < len(input); k++ {
+				distance := int(math.Abs(float64(i-input[k][1])) + math.Abs(float64(j-input[k][2])))
+				sumDistance += distance
+				if distance == minimumDistance && minimumID != -1 {
+					input[minimumID][3]--
+					minimumID = -1
+				}
+				if distance < minimumDistance {
+					if minimumID != -1 {
+						input[minimumID][3]--
+					}
+					minimumID = k
+					minimumDistance = distance
+					input[k][3]++
+				}
+
+			}
+			if sumDistance < 10000 {
+				tilesLessThen++
+			}
+		}
+	}
+
+	return input, tilesLessThen
 }
 
-func countGrid(grid [][]int) (size int) {
+func biggestArea(datapoints [][]int) (count int) {
+	for i := 0; i < len(datapoints); i++ {
+		if datapoints[i][3] > count && datapoints[i][0] != -1 {
+			count = datapoints[i][3]
+		}
+	}
 
-	return size
+	return count
 }
 
 func parseCoordinates(input string) (x, y int) {
@@ -88,18 +127,16 @@ func main() {
 		input := scanner.Text()
 
 		x, y := parseCoordinates(input)
-		datapoints = append(datapoints, []int{id, x, y})
+		datapoints = append(datapoints, []int{id, x, y, 0})
 		id++
 	}
 
 	// fmt.Println(datapoints)
 
 	grid, offset := buildGrid(datapoints)
-	filledGrid := fillGrid(offset, grid, datapoints)
+	output, tilesLessThen := fillGrid(offset, grid, datapoints)
 
-	for i := 0; i < len(filledGrid); i++ {
-		fmt.Println(filledGrid[i])
-	}
+	fmt.Println(biggestArea(output), tilesLessThen)
 
 	fmt.Println(time.Since(start))
 }
