@@ -48,7 +48,7 @@ func iterateCommands(input string) string {
 }
 
 func outcome(input string) (count int) {
-	indexShift := 50000000000 - 200
+	indexShift := 50000000000 - 125
 	x := []rune("#")
 	count = 0
 
@@ -86,9 +86,9 @@ func main() {
 		line++
 	}
 
-	//Visually observed that after about 200 iterations the outcome is stable
+	//Visually observed that after about 125 iterations the outcome is stable
 	//For compatibility this should be decided by a function #ToDo
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 125; i++ {
 		state = iterateCommands(state)
 	}
 
