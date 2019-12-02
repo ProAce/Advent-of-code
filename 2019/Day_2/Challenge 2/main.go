@@ -26,7 +26,8 @@ func main() {
 		line := scanner.Text()
 
 		opcodeString := strings.Split(line, ",")
-		opcode := [1000]int{}
+		opcode := [1000]int{} // Set length to counteract out of bounds issue
+
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
 			opcode[address] = i
@@ -43,22 +44,17 @@ func main() {
 				opcode[2] = x
 
 				for i := 0; i < len(opcode); i += 4 {
-					address1 := opcode[i+1]
-					address2 := opcode[i+2]
-					address3 := opcode[i+3]
-
-					if opcode[i] == 1 {
-						opcode[address3] = opcode[address1] + opcode[address2]
-					} else if opcode[i] == 2 {
-						opcode[address3] = opcode[address1] * opcode[address2]
-					} else if opcode[i] == 99 {
+					if opcode[i] == 1 { // opcode 1 = addition
+						opcode[opcode[i+3]] = opcode[opcode[i+1]] + opcode[opcode[i+2]]
+					} else if opcode[i] == 2 { // opcode 2 = multiplication
+						opcode[opcode[i+3]] = opcode[opcode[i+1]] * opcode[opcode[i+2]]
+					} else if opcode[i] == 99 { // opcode 99 = termination
 						break
 					}
 				}
 
 				if opcode[0] == 19690720 {
-					fmt.Println(y)
-					fmt.Println(x)
+					fmt.Println(100*y + x)
 					break loop
 				}
 			}
