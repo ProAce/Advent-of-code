@@ -26,7 +26,7 @@ func main() {
 		line := scanner.Text()
 
 		opcodeString := strings.Split(line, ",")
-		opcode := [10000]int{}
+		opcode := [1000]int{}
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
 			opcode[address] = i
