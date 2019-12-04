@@ -27,6 +27,7 @@ func criteriaCheck(i int) bool {
 	}
 
 	double := false
+	matchlength := 1
 
 	for j := 0; j < len(digits)-1; j++ {
 		if digits[j] < digits[j+1] {
@@ -34,9 +35,13 @@ func criteriaCheck(i int) bool {
 		}
 
 		if digits[j] == digits[j+1] {
+			matchlength++
+		} else if matchlength == 2 {
 			double = true
+		} else {
+			matchlength = 1
 		}
 	}
 
-	return double
+	return double || matchlength == 2
 }
