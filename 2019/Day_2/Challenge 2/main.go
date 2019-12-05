@@ -43,13 +43,26 @@ func main() {
 				opcode[1] = y
 				opcode[2] = x
 
-				for i := 0; i < len(opcode); i += 4 {
-					if opcode[i] == 1 { // opcode 1 = addition
+				i := 0
+			opcode:
+				for i < len(opcode) {
+					switch opcode[i] {
+					case 1:
 						opcode[opcode[i+3]] = opcode[opcode[i+1]] + opcode[opcode[i+2]]
-					} else if opcode[i] == 2 { // opcode 2 = multiplication
-						opcode[opcode[i+3]] = opcode[opcode[i+1]] * opcode[opcode[i+2]]
-					} else if opcode[i] == 99 { // opcode 99 = termination
+						i += 4
 						break
+					case 2:
+						opcode[opcode[i+3]] = opcode[opcode[i+1]] * opcode[opcode[i+2]]
+						i += 4
+						break
+					case 3:
+						// opcode[opcode[i+1]] = input
+						// i++
+						break
+					case 4:
+						break
+					case 99:
+						break opcode
 					}
 				}
 
