@@ -72,7 +72,9 @@ func main() {
 				i += 2
 				break
 			case 4:
-				fmt.Println(opcode[opcode[i+1]])
+				if opcode[opcode[i+1]] != 0 {
+					fmt.Println(opcode[opcode[i+1]])
+				}
 				i += 2
 				break
 			case 5:
@@ -88,7 +90,6 @@ func main() {
 				} else {
 					i += 3
 				}
-
 				break
 			case 7:
 				if parameter(opcode, firstParameterMode, i+1) < parameter(opcode, secondParameterMode, i+2) {
@@ -107,10 +108,9 @@ func main() {
 				i += 4
 				break
 			case 99:
-				fmt.Println("Opcode halted")
 				break opcode
 			default:
-				log.Fatal(opcode[i], i)
+				log.Fatal("Unknown opcode:", opcode[i], "at address:", i)
 				break
 			}
 		}
