@@ -33,11 +33,9 @@ func main() {
 	santaOrbit := buildString("SAN", orbitMap)
 	yourOrbit := buildString("YOU", orbitMap)
 
-	firstCommon := firstCommonCharacter(santaOrbit, yourOrbit)
+	x, y := firstCommonCharacterPosition(santaOrbit, yourOrbit)
 
-	orbitStepsCount := (stepsToCommonCharacter(santaOrbit, firstCommon) + stepsToCommonCharacter(yourOrbit, firstCommon))
-
-	fmt.Println(orbitStepsCount)
+	fmt.Println(x + y)
 	fmt.Println(time.Since(start))
 }
 
@@ -54,26 +52,14 @@ func buildString(key string, orbitMap map[string]string) (output []string) {
 	}
 }
 
-func firstCommonCharacter(input1, input2 []string) string {
-	for _, value1 := range input1 {
-		for _, value2 := range input2 {
+func firstCommonCharacterPosition(input1, input2 []string) (x, y int) {
+	for x, value1 := range input1 {
+		for y, value2 := range input2 {
 			if value1 == value2 {
-				return value1
+				return x - 1, y - 1 // Compensate for index offset
 			}
 		}
 	}
 
-	return ""
-}
-
-func stepsToCommonCharacter(input []string, character string) (count int) {
-	for _, value := range input {
-		if value == character {
-			break
-		} else {
-			count++
-		}
-	}
-
-	return count - 1 // Compensate for the first step
+	return -1, -1
 }
