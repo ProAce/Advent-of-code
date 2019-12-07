@@ -27,7 +27,7 @@ func main() {
 		line := scanner.Text()
 
 		opcodeString := strings.Split(line, ",")
-		opcode := make([]int, 1000) // Set length to counteract out of bounds issue
+		opcode := make(map[int]int)
 
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
@@ -119,7 +119,7 @@ func main() {
 	fmt.Println(time.Since(start))
 }
 
-func parameter(opcode []int, parameterMode, position int) int {
+func parameter(opcode map[int]int, parameterMode, position int) int {
 	if parameterMode == 1 {
 		return opcode[position]
 	}

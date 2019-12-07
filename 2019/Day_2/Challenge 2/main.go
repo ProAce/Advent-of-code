@@ -26,7 +26,7 @@ func main() {
 		line := scanner.Text()
 
 		opcodeString := strings.Split(line, ",")
-		opcode := [1000]int{} // Set length to counteract out of bounds issue
+		opcode := make(map[int]int) // Set length to counteract out of bounds issue
 
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
