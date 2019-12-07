@@ -55,12 +55,6 @@ func main() {
 						opcode[opcode[i+3]] = opcode[opcode[i+1]] * opcode[opcode[i+2]]
 						i += 4
 						break
-					case 3:
-						// opcode[opcode[i+1]] = input
-						// i++
-						break
-					case 4:
-						break
 					case 99:
 						break opcode
 					}
