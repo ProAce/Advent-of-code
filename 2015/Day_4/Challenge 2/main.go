@@ -25,7 +25,7 @@ func main() {
 
 		value := hex.EncodeToString(hashByte)
 
-		if strings.HasPrefix(value, "00000") { // Hash has leading zeroes
+		if strings.HasPrefix(value, "000000") { // Hash has leading zeroes
 			fmt.Println(i)
 			break
 		}

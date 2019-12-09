@@ -5,37 +5,30 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
 func stringNice(input string) bool {
-	vowels := 0
+	if strings.Contains(input, "ab") || strings.Contains(input, "cd") || strings.Contains(input, "pq") || strings.Contains(input, "xy") {
+		return false
+	}
+
+	vowels := strings.Count(input, "a") + strings.Count(input, "e") + strings.Count(input, "o") + strings.Count(input, "u") + strings.Count(input, "i")
 	foundDoubles := false
-	for i := 0; i < len(input)-1; i++ {
-		test := string(input[i] + input[i+1])
-		if test == "ab" || test == "cd" || test == "pq" || test == "xy" {
-			return false
-		}
 
-		if !foundDoubles {
-			for j := 65; j <= 90; j++ {
-				if test == string(j)+string(j) {
-					foundDoubles = true
-				}
-			}
-		}
-
-		test = string(input[i])
-		if vowels < 3 {
-			if test == "a" || test == "e" || test == "o" || test == "i" || test == "u" {
-				vowels++
-			}
-		}
-
-		if foundDoubles && vowels >= 3 {
-			return true
+	for i := 97; i <= 122; i++ {
+		doubleString := string(i) + string(i)
+		if strings.Contains(input, doubleString) {
+			foundDoubles = true
+			break
 		}
 	}
+
+	if vowels >= 3 && foundDoubles {
+		return true
+	}
+
 	return false
 }
 
