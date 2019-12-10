@@ -6,10 +6,22 @@ import (
 	"log"
 	"math"
 	"os"
-	"strconv"
-	"strings"
+	"sort"
 	"time"
 )
+
+type point struct {
+	x, y int
+}
+
+type angle struct {
+	points []point
+	angle  float64
+}
+
+func (p point) distanceTo(centerx, centery int) int {
+	return (p.x - centerx) + (p.y - centery)
+}
 
 func main() {
 	start := time.Now()
@@ -29,7 +41,7 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		for _, value := range line {
+		for _, value := range line { // Make a map of all the asteroids
 			switch value {
 			case '.':
 				asteroidMap[index] = append(asteroidMap[index], 0)
@@ -38,7 +50,6 @@ func main() {
 				asteroidMap[index] = append(asteroidMap[index], 1)
 				break
 			default:
-				asteroidMap[index] = append(asteroidMap[index], 8)
 				break
 			}
 		}
@@ -47,68 +58,104 @@ func main() {
 	}
 
 	maximumLength := 0
-	maximumX := 0
-	maximumY := 0
+	center := point{}
+	angleMap := []angle{}
 
-	for inputy, row := range asteroidMap {
+	for inputy, row := range asteroidMap { // Check for every asteroid
 		for inputx, value := range row {
 			if value == 1 {
-				angle := calculateAngles(asteroidMap, inputx, inputy)
-				if len(angle) > maximumLength {
-					maximumLength = len(angle)
-					maximumX = inputx
-					maximumY = inputy
+				output := calculateAngles(asteroidMap, point{inputx, inputy})
+				if len(output) > maximumLength {
+					maximumLength = len(output)
+					center = point{inputx, inputy}
+					angleMap = output
 				}
 			}
 		}
 	}
 
-	fmt.Println(maximumX, maximumY, maximumLength)
+	fmt.Println(center, maximumLength)
+
+	coordinate := anihilateAsteroids(angleMap, center, 200)
+
+	fmt.Println(coordinate)
 
 	fmt.Println(time.Since(start))
 }
 
-func calculateAngles(input map[int][]byte, x, y int) (angle map[float64]int) {
-	angle = make(map[float64]int)
-
+// calculateAngles takes an map and position
+func calculateAngles(input map[int][]byte, center point) (output []angle) {
+	angleMap := make(map[float64][]point)
 	for inputy, row := range input {
 		for inputx, value := range row {
 			if value == 1 {
-				inputAngle := getAngle(x, y, inputx, inputy)
-				angle[inputAngle] = 1
+				end := point{inputx, inputy}
+				inputAngle := getAngle(center, end)
+
+				val := point{inputx, inputy}
+				angleMap[inputAngle] = append(angleMap[inputAngle], val)
 			}
 		}
 	}
 
-	return angle
+	for key := range angleMap {
+		output = append(output, angle{angleMap[key], key})
+	}
+
+	sort.SliceStable(output, func(i, j int) bool {
+		return output[i].angle < output[j].angle
+	})
+
+	return output
 }
 
-func getAngle(centerx, centery, endx, endy int) float64 {
-	dy := float64(endy - centery)
-	dx := float64(endx - centerx)
-	theta := math.Atan2(dy, dx) // range (-PI, PI]
-	theta *= 180 / math.Pi      // rads to degs, range (-180, 180]
+func anihilateAsteroids(input []angle, center point, stopCounter int) int {
+	asteroidsAnihilated := 0
+
+	for key := range input {
+		input[key].points = sortPositions(input[key].points, center)
+	}
+
+	i := 0
+	for {
+		asteroidsAnihilated++
+
+		if asteroidsAnihilated == stopCounter {
+			return input[i].points[0].x*100 + input[i].points[0].y
+		}
+
+		input[i].points = input[i].points[:1]
+
+		i++
+		if i == len(input)-1 {
+			i = 0
+		}
+	}
+}
+
+func getAngle(center, end point) float64 {
+	dy := float64(end.y - center.y)
+	dx := float64(end.x - center.x)
+	theta := math.Atan2(dy, dx) // Range (-PI, PI)
+	theta *= 180 / math.Pi      // Rads to degs, range (-180, 180)
+	if theta < -90 {
+		theta = linear(theta, -180, -90, 270, 360)
+	} else {
+		theta = linear(theta, -90, 180, 0, 270)
+	}
 	return theta
 }
 
-func anihilateAsteroids(input map[int][]byte, x, y, stopCounter int) int {
-	angleMap := make(map[float64][]string) // key = angle, value = "x,y"
+func sortPositions(input []point, center point) []point {
+	sort.SliceStable(input, func(i, j int) bool {
+		distanceI := (input[i].x - center.x) + (input[i].y - center.y)
+		distanceJ := (input[j].x - center.x) + (input[j].y - center.y)
+		return distanceI < distanceJ
+	})
 
-	asteroidsAnihilated := 0
-
-	for inputy, row := range input {
-		for inputx, value := range row {
-			if value == 1 {
-			}
-		}
-	}
-
-	return x*100 + y
+	return input
 }
 
-func extractXY(input string) (x, y int) {
-	value := strings.Split(input, ",")
-	x, _ = strconv.Atoi(value[0])
-	y, _ = strconv.Atoi(value[1])
-	return x, y
+func linear(x, inMin, inMax, outMin, outMax float64) float64 {
+	return (x-inMin)*(outMax-outMin)/(inMax-inMin) + outMin
 }
