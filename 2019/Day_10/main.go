@@ -35,42 +35,36 @@ func main() {
 
 	scanner := bufio.NewScanner(intputFile)
 
-	asteroidMap := make(map[int][]byte)
-	index := 0
+	asteroidMap := []point{}
+
+	y := 0
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		for _, value := range line { // Make a map of all the asteroids
+		for x, value := range line { // Make a map of all the asteroids
 			switch value {
-			case '.':
-				asteroidMap[index] = append(asteroidMap[index], 0)
-				break
 			case '#':
-				asteroidMap[index] = append(asteroidMap[index], 1)
+				asteroidMap = append(asteroidMap, point{x, y})
 				break
 			default:
 				break
 			}
 		}
 
-		index++
+		y++
 	}
 
 	maximumLength := 0
 	center := point{}
 	angleMap := []angle{}
 
-	for inputy, row := range asteroidMap { // Check for every asteroid if it has the longest length
-		for inputx, value := range row {
-			if value == 1 {
-				output := calculateAngles(asteroidMap, point{inputx, inputy})
-				if len(output) > maximumLength {
-					maximumLength = len(output)
-					center = point{inputx, inputy}
-					angleMap = output
-				}
-			}
+	for i := range asteroidMap { // Check for every asteroid if it has the longest length
+		output := calculateAngles(asteroidMap, asteroidMap[i])
+		if len(output) > maximumLength {
+			maximumLength = len(output)
+			center = asteroidMap[i]
+			angleMap = output
 		}
 	}
 
@@ -84,18 +78,11 @@ func main() {
 }
 
 // calculateAngles takes an map and position and returns a sorted slice of type angle
-func calculateAngles(input map[int][]byte, center point) (output []angle) {
+func calculateAngles(input []point, center point) (output []angle) {
 	angleMap := make(map[float64][]point)
-	for inputy, row := range input {
-		for inputx, value := range row {
-			if value == 1 {
-				end := point{inputx, inputy}
-				inputAngle := getAngle(center, end)
-
-				val := point{inputx, inputy}
-				angleMap[inputAngle] = append(angleMap[inputAngle], val)
-			}
-		}
+	for i := range input {
+		inputAngle := getAngle(center, input[i])
+		angleMap[inputAngle] = append(angleMap[inputAngle], input[i])
 	}
 
 	for key := range angleMap {
@@ -151,8 +138,8 @@ func getAngle(center, end point) float64 {
 // sortPositions returns a sorted point slice based on its distance to center
 func sortPositions(input []point, center point) []point {
 	sort.SliceStable(input, func(i, j int) bool {
-		distanceI := (input[i].x - center.x) + (input[i].y - center.y)
-		distanceJ := (input[j].x - center.x) + (input[j].y - center.y)
+		distanceI := ((input[i].x - center.x) * (input[i].x - center.x)) + ((input[i].y - center.y) * (input[i].y - center.y))
+		distanceJ := ((input[j].x - center.x) * (input[j].x - center.x)) + ((input[j].y - center.y) * (input[j].y - center.y))
 		return distanceI < distanceJ
 	})
 
