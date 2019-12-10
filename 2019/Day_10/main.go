@@ -61,7 +61,7 @@ func main() {
 	center := point{}
 	angleMap := []angle{}
 
-	for inputy, row := range asteroidMap { // Check for every asteroid
+	for inputy, row := range asteroidMap { // Check for every asteroid if it has the longest length
 		for inputx, value := range row {
 			if value == 1 {
 				output := calculateAngles(asteroidMap, point{inputx, inputy})
@@ -76,14 +76,14 @@ func main() {
 
 	fmt.Println(center, maximumLength)
 
-	coordinate := anihilateAsteroids(angleMap, center, 200)
+	coordinate := anihilateAsteroids(angleMap, center, 200) // Check which is the 200th asteroid to be destroyed
 
 	fmt.Println(coordinate)
 
 	fmt.Println(time.Since(start))
 }
 
-// calculateAngles takes an map and position
+// calculateAngles takes an map and position and returns a sorted slice of type angle
 func calculateAngles(input map[int][]byte, center point) (output []angle) {
 	angleMap := make(map[float64][]point)
 	for inputy, row := range input {
@@ -109,6 +109,7 @@ func calculateAngles(input map[int][]byte, center point) (output []angle) {
 	return output
 }
 
+// anihilateAsteroids removes asteroids clockwise untl it has reached the stopCounter
 func anihilateAsteroids(input []angle, center point, stopCounter int) int {
 	asteroidsAnihilated := 0
 
@@ -133,6 +134,7 @@ func anihilateAsteroids(input []angle, center point, stopCounter int) int {
 	}
 }
 
+// getAngle returns an angle between the two points and the y axis in degrees
 func getAngle(center, end point) float64 {
 	dy := float64(end.y - center.y)
 	dx := float64(end.x - center.x)
@@ -146,6 +148,7 @@ func getAngle(center, end point) float64 {
 	return theta
 }
 
+// sortPositions returns a sorted point slice based on its distance to center
 func sortPositions(input []point, center point) []point {
 	sort.SliceStable(input, func(i, j int) bool {
 		distanceI := (input[i].x - center.x) + (input[i].y - center.y)
