@@ -138,8 +138,12 @@ func getAngle(center, end point) float64 {
 // sortPositions returns a sorted point slice based on its distance to center
 func sortPositions(input []point, center point) []point {
 	sort.SliceStable(input, func(i, j int) bool {
-		distanceI := ((input[i].x - center.x) * (input[i].x - center.x)) + ((input[i].y - center.y) * (input[i].y - center.y))
-		distanceJ := ((input[j].x - center.x) * (input[j].x - center.x)) + ((input[j].y - center.y) * (input[j].y - center.y))
+		x := ((input[i].x - center.x) * (input[i].x - center.x))
+		y := ((input[i].y - center.y) * (input[i].y - center.y))
+		distanceI := x + y
+		x = ((input[j].x - center.x) * (input[j].x - center.x))
+		y = ((input[j].y - center.y) * (input[j].y - center.y))
+		distanceJ := x + y
 		return distanceI < distanceJ
 	})
 
