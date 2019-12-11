@@ -70,7 +70,7 @@ func main() {
 
 	fmt.Println(center, maximumLength)
 
-	coordinate := anihilateAsteroids(angleMap, center, 200) // Check which is the 200th asteroid to be destroyed
+	coordinate := anihilateAsteroids(angleMap, center, 299) // Check which is the 200th asteroid to be destroyed
 
 	fmt.Println(coordinate)
 
@@ -112,10 +112,15 @@ func anihilateAsteroids(input []angle, center point, stopCounter int) int {
 			return input[i].points[0].x*100 + input[i].points[0].y
 		}
 
-		input[i].points = input[i].points[:1]
+		if len(input[i].points) <= 1 {
+			copy(input[i:], input[i+1:])
+			input = input[:len(input)-1]
+		} else {
+			input[i].points = input[i].points[1:]
+			i++
+		}
 
-		i++
-		if i == len(input)-1 {
+		if i == len(input) {
 			i = 0
 		}
 	}
