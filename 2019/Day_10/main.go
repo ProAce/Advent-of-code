@@ -14,13 +14,13 @@ type point struct {
 	x, y int
 }
 
+func (p *point) distanceTo(c point) int {
+	return ((p.x - c.x) * (p.x - c.x)) + ((p.y - c.y) * (p.y - c.y))
+}
+
 type angle struct {
 	points []point
 	angle  float64
-}
-
-func (p point) distanceTo(centerx, centery int) int {
-	return (p.x - centerx) + (p.y - centery)
 }
 
 func main() {
@@ -59,7 +59,7 @@ func main() {
 	center := point{}
 	angleMap := []angle{}
 
-	for i := range asteroidMap { // Check for every asteroid if it has the longest length
+	for i := range asteroidMap { // Check for every asteroid if it has the longest length of angles
 		output := calculateAngles(asteroidMap, asteroidMap[i])
 		if len(output) > maximumLength {
 			maximumLength = len(output)
@@ -138,13 +138,7 @@ func getAngle(center, end point) float64 {
 // sortPositions returns a sorted point slice based on its distance to center
 func sortPositions(input []point, center point) []point {
 	sort.SliceStable(input, func(i, j int) bool {
-		x := ((input[i].x - center.x) * (input[i].x - center.x))
-		y := ((input[i].y - center.y) * (input[i].y - center.y))
-		distanceI := x + y
-		x = ((input[j].x - center.x) * (input[j].x - center.x))
-		y = ((input[j].y - center.y) * (input[j].y - center.y))
-		distanceJ := x + y
-		return distanceI < distanceJ
+		return input[i].distanceTo(center) < input[j].distanceTo(center)
 	})
 
 	return input

@@ -13,6 +13,103 @@ import (
 type opcode struct {
 	commands     map[int]int
 	relativeBase int
+	input        int
+	index        int
+}
+
+func (o *opcode) runOpcode() (output []int) {
+	for {
+		// True = immediate mode, False = position mode
+		firstParameterMode := (o.commands[o.index] / 100) % 10
+		secondParameterMode := (o.commands[o.index] / 1000) % 10
+		thirdParameterMode := (o.commands[o.index] / 10000) % 10
+
+		switch o.commands[o.index] % 100 {
+		case 1:
+			value := o.readParameter(firstParameterMode, 1) + o.readParameter(secondParameterMode, 2)
+			o.writeParameter(thirdParameterMode, 3, value)
+			o.index += 4
+			break
+		case 2:
+			value := o.readParameter(firstParameterMode, 1) * o.readParameter(secondParameterMode, 2)
+			o.writeParameter(thirdParameterMode, 3, value)
+			o.index += 4
+			break
+		case 3: // the parameter function only works the other way around
+			o.writeParameter(firstParameterMode, 1, o.input)
+			o.index += 2
+			break
+		case 4:
+			output = append(output, o.readParameter(firstParameterMode, 1))
+			o.index += 2
+			break
+		case 5:
+			if o.readParameter(firstParameterMode, 1) != 0 {
+				o.index = o.readParameter(secondParameterMode, 2)
+			} else {
+				o.index += 3
+			}
+			break
+		case 6:
+			if o.readParameter(firstParameterMode, 1) == 0 {
+				o.index = o.readParameter(secondParameterMode, 2)
+			} else {
+				o.index += 3
+			}
+			break
+		case 7:
+			if o.readParameter(firstParameterMode, 1) < o.readParameter(secondParameterMode, 2) {
+				o.writeParameter(thirdParameterMode, 3, 1)
+			} else {
+				o.writeParameter(thirdParameterMode, 3, 0)
+			}
+			o.index += 4
+			break
+		case 8:
+			if o.readParameter(firstParameterMode, 1) == o.readParameter(secondParameterMode, 2) {
+				o.writeParameter(thirdParameterMode, 3, 1)
+			} else {
+				o.writeParameter(thirdParameterMode, 3, 0)
+			}
+			o.index += 4
+			break
+		case 9:
+			o.relativeBase += o.readParameter(firstParameterMode, 1)
+			o.index += 2
+			break
+		case 99:
+			return output
+		default:
+			log.Fatal("Unknown opcode: ", o.commands[o.index], " at address: ", o.index)
+			break
+		}
+	}
+}
+
+func (o *opcode) readParameter(parameterMode, position int) int {
+	position += o.index
+	if parameterMode == 1 {
+		return o.commands[position]
+	}
+	if parameterMode == 2 {
+		return o.commands[o.relativeBase+o.commands[position]]
+	}
+
+	return o.commands[o.commands[position]]
+}
+
+func (o *opcode) writeParameter(parameterMode, position, value int) {
+	position += o.index
+	if parameterMode == 1 {
+		o.commands[position] = value
+		return
+	}
+	if parameterMode == 2 {
+		o.commands[o.relativeBase+o.commands[position]] = value
+		return
+	}
+
+	o.commands[o.commands[position]] = value
 }
 
 type point struct {
@@ -24,6 +121,39 @@ type paintRobot struct {
 	points    map[point]int
 	position  point
 	direction int
+}
+
+// switchDirection: 0 = left, 1 = right
+func (p *paintRobot) switchDirection(right int) {
+	if right == 1 {
+		p.direction++
+		if p.direction > 3 {
+			p.direction = 0
+		}
+	} else {
+		p.direction--
+		if p.direction < 0 {
+			p.direction = 3
+		}
+	}
+}
+
+// walkDirection walks one step in the direction the robot is facing
+func (p *paintRobot) walkDirection() {
+	switch p.direction {
+	case 0: // Up
+		p.position = point{p.position.x, p.position.y + 1}
+		break
+	case 1: // Right
+		p.position = point{p.position.x + 1, p.position.y}
+		break
+	case 2: // Down
+		p.position = point{p.position.x, p.position.y - 1}
+		break
+	case 3: // Left
+		p.position = point{p.position.x - 1, p.position.y}
+		break
+	}
 }
 
 func main() {
@@ -60,165 +190,8 @@ func main() {
 			direction: 0,
 		}
 
-		input := make(chan int)
-		output := make(chan int)
-
-		go runOpcode(opcode, input, output)
-
-		for {
-			_, ok := <-output
-			if !ok {
-				break
-			}
-			input <- robot.points[robot.position]
-
-			out := make([]int, 2)
-			for i := range out {
-				out[i] = <-output
-			}
-
-			robot.points[robot.position] = out[0]
-
-			robot.direction = switchDirection(robot, out[1])
-			robot.position = walkDirection(robot)
-		}
-
 		fmt.Println(len(robot.points))
 	}
 
 	fmt.Println(time.Since(start))
-}
-
-// switchDirection: 0 = up, 1 = right, 2 = down, 3 = left
-func switchDirection(robot paintRobot, right int) int {
-
-	if right == 1 {
-		robot.direction++
-		if robot.direction > 3 {
-			robot.direction = 0
-		}
-	} else {
-		robot.direction--
-		if robot.direction < 0 {
-			robot.direction = 3
-		}
-	}
-
-	return robot.direction
-}
-
-func walkDirection(robot paintRobot) point {
-	switch robot.direction {
-	case 0: // Up
-		robot.position = point{robot.position.x, robot.position.y + 1}
-		break
-	case 1: // Right
-		robot.position = point{robot.position.x + 1, robot.position.y}
-		break
-	case 2: // Down
-		robot.position = point{robot.position.x, robot.position.y - 1}
-		break
-	case 3: // Left
-		robot.position = point{robot.position.x - 1, robot.position.y}
-		break
-	}
-
-	return robot.position
-}
-
-func runOpcode(op opcode, input, output chan int) {
-	i := 0
-	for i < len(op.commands) {
-		// True = immediate mode, False = position mode
-		firstParameterMode := (op.commands[i] / 100) % 10
-		secondParameterMode := (op.commands[i] / 1000) % 10
-		thirdParameterMode := (op.commands[i] / 10000) % 10
-
-		switch op.commands[i] % 100 {
-		case 1:
-			value := readParameter(&op, firstParameterMode, i+1) + readParameter(&op, secondParameterMode, i+2)
-			writeParameter(&op, thirdParameterMode, i+3, value)
-			i += 4
-			break
-		case 2:
-			value := readParameter(&op, firstParameterMode, i+1) * readParameter(&op, secondParameterMode, i+2)
-			writeParameter(&op, thirdParameterMode, i+3, value)
-			i += 4
-			break
-		case 3:
-			writeParameter(&op, firstParameterMode, i+1, <-input)
-			i += 2
-			break
-		case 4:
-			output <- readParameter(&op, firstParameterMode, i+1)
-			i += 2
-			break
-		case 5:
-			if readParameter(&op, firstParameterMode, i+1) != 0 {
-				i = readParameter(&op, secondParameterMode, i+2)
-			} else {
-				i += 3
-			}
-			break
-		case 6:
-			if readParameter(&op, firstParameterMode, i+1) == 0 {
-				i = readParameter(&op, secondParameterMode, i+2)
-			} else {
-				i += 3
-			}
-			break
-		case 7:
-			if readParameter(&op, firstParameterMode, i+1) < readParameter(&op, secondParameterMode, i+2) {
-				writeParameter(&op, thirdParameterMode, i+3, 1)
-			} else {
-				writeParameter(&op, thirdParameterMode, i+3, 0)
-			}
-			i += 4
-			break
-		case 8:
-			if readParameter(&op, firstParameterMode, i+1) == readParameter(&op, secondParameterMode, i+2) {
-				writeParameter(&op, thirdParameterMode, i+3, 1)
-			} else {
-				writeParameter(&op, thirdParameterMode, i+3, 0)
-			}
-			i += 4
-			break
-		case 9:
-			op.relativeBase += readParameter(&op, firstParameterMode, i+1)
-			i += 2
-			break
-		case 99:
-			close(input)
-			close(output)
-			return
-		default:
-			log.Fatal("Unknown opcode: ", op.commands[i], " at address: ", i)
-			break
-		}
-	}
-}
-
-func readParameter(op *opcode, parameterMode, position int) int {
-
-	if parameterMode == 1 {
-		return op.commands[position]
-	}
-	if parameterMode == 2 {
-		return op.commands[op.relativeBase+op.commands[position]]
-	}
-
-	return op.commands[op.commands[position]]
-}
-
-func writeParameter(op *opcode, parameterMode, position, value int) {
-	if parameterMode == 1 {
-		op.commands[position] = value
-		return
-	}
-	if parameterMode == 2 {
-		op.commands[op.relativeBase+op.commands[position]] = value
-		return
-	}
-
-	op.commands[op.commands[position]] = value
 }
