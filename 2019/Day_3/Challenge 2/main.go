@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+type point struct {
+	x, y int
+}
+
 func main() {
 	start := time.Now()
 
@@ -23,15 +27,14 @@ func main() {
 
 	scanner := bufio.NewScanner(inputFile)
 
-	grid := make(map[string]int)
+	grid := make(map[point]int)
 
 	commands := [2][]string{}
 
 	j := 1
 
 	for scanner.Scan() {
-		currentx := 0
-		currenty := 0
+		current := point{0, 0}
 
 		line := scanner.Text()
 
@@ -48,19 +51,19 @@ func main() {
 			for i := 0; i < count; i++ {
 				switch value[0] {
 				case 'U':
-					currentx++
+					current.x++
 					break
 				case 'D':
-					currentx--
+					current.x--
 					break
 				case 'R':
-					currenty++
+					current.y++
 					break
 				case 'L':
-					currenty--
+					current.y--
 					break
 				}
-				key := strconv.Itoa(currentx) + "," + strconv.Itoa(currenty)
+				key := point{current.x, current.y}
 				grid[key] += j
 			}
 		}
@@ -71,19 +74,15 @@ func main() {
 
 	for key, i := range grid {
 		if i == 3 {
-			coordinates := strings.Split(key, ",")
-			x, _ := strconv.Atoi(coordinates[0])
-			y, _ := strconv.Atoi(coordinates[1])
-
 			takenSteps := 0
 
 			for j := range commands {
-				_x := 0
-				_y := 0
 
 			loop:
 				for _, value := range commands[j] {
 					count, err := strconv.Atoi(value[1:])
+
+					current := point{0, 0}
 
 					if err != nil {
 						log.Fatal(err)
@@ -92,19 +91,19 @@ func main() {
 					for i := 0; i < count; i++ {
 						switch value[0] {
 						case 'U':
-							_x++
+							current.x++
 							break
 						case 'D':
-							_x--
+							current.x--
 							break
 						case 'R':
-							_y++
+							current.y++
 							break
 						case 'L':
-							_y--
+							current.y--
 							break
 						}
-						if _x == x && _y == y {
+						if current.x == key.x && current.y == key.y {
 							takenSteps++
 							break loop
 						} else {

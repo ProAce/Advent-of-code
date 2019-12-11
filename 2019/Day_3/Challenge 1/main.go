@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+type point struct {
+	x, y int
+}
+
 func main() {
 	start := time.Now()
 
@@ -23,13 +27,12 @@ func main() {
 
 	scanner := bufio.NewScanner(inputFile)
 
-	grid := make(map[string]int)
+	grid := make(map[point]int)
 
 	j := 1
 
 	for scanner.Scan() {
-		currentx := 0
-		currenty := 0
+		current := point{0, 0}
 
 		line := scanner.Text()
 
@@ -45,19 +48,19 @@ func main() {
 			for i := 0; i < count; i++ {
 				switch value[0] {
 				case 'U':
-					currentx++
+					current.x++
 					break
 				case 'D':
-					currentx--
+					current.x--
 					break
 				case 'R':
-					currenty++
+					current.y++
 					break
 				case 'L':
-					currenty--
+					current.y--
 					break
 				}
-				key := strconv.Itoa(currentx) + "," + strconv.Itoa(currenty)
+				key := point{current.x, current.y}
 				grid[key] += j
 			}
 		}
@@ -68,15 +71,11 @@ func main() {
 
 	for key, i := range grid {
 		if i == 3 {
-			coordinates := strings.Split(key, ",")
-			x, _ := strconv.Atoi(coordinates[0])
-			y, _ := strconv.Atoi(coordinates[1])
+			key.x = abs(key.x)
+			key.y = abs(key.y)
 
-			x = abs(x)
-			y = abs(y)
-
-			if (x + y) < distance {
-				distance = x + y
+			if (key.x + key.y) < distance {
+				distance = key.x + key.y
 			}
 		}
 	}
