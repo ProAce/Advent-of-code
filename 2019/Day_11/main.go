@@ -20,9 +20,10 @@ type point struct {
 }
 
 type paintRobot struct {
-	opcode opcode
-	points []point
-	index  int
+	opcode    opcode
+	points    map[point]int
+	position  point
+	direction int
 }
 
 func main() {
@@ -52,12 +53,79 @@ func main() {
 			opcode.commands[address] = i
 		}
 
+		robot := paintRobot{
+			opcode:    opcode,
+			points:    make(map[point]int),
+			position:  point{0, 0},
+			direction: 0,
+		}
+
+		channel := make(chan int)
+
+		go runOpcode(opcode, channel)
+
+		for {
+			_, ok := <-channel
+			if !ok {
+				break
+			}
+			channel <- robot.points[robot.position]
+
+			output := make([]int, 2)
+			for i := range output {
+				output[i] = <-channel
+			}
+
+			robot.points[robot.position] = output[0]
+
+			robot.direction = switchDirection(robot, output[1])
+			robot.position = walkDirection(robot)
+		}
+
+		fmt.Println(len(robot.points))
 	}
 
 	fmt.Println(time.Since(start))
 }
 
-func runOpcode(op opcode, input chan int) (output chan int) {
+// switchDirection: 0 = up, 1 = right, 2 = down, 3 = left
+func switchDirection(robot paintRobot, right int) int {
+
+	if right == 1 {
+		robot.direction++
+		if robot.direction > 3 {
+			robot.direction = 0
+		}
+	} else {
+		robot.direction--
+		if robot.direction < 0 {
+			robot.direction = 3
+		}
+	}
+
+	return robot.direction
+}
+
+func walkDirection(robot paintRobot) point {
+	switch robot.direction {
+	case 0: // Up
+		robot.position = point{robot.position.x, robot.position.y + 1}
+		break
+	case 1: // Right
+		robot.position = point{robot.position.x + 1, robot.position.y}
+		break
+	case 2: // Down
+		robot.position = point{robot.position.x, robot.position.y - 1}
+		break
+	case 3: // Left
+		robot.position = point{robot.position.x - 1, robot.position.y}
+		break
+	}
+
+	return robot.position
+}
+
+func runOpcode(op opcode, channel chan int) {
 	i := 0
 	for i < len(op.commands) {
 		// True = immediate mode, False = position mode
@@ -77,11 +145,11 @@ func runOpcode(op opcode, input chan int) (output chan int) {
 			i += 4
 			break
 		case 3:
-			writeParameter(&op, firstParameterMode, i+1, <-input)
+			writeParameter(&op, firstParameterMode, i+1, <-channel)
 			i += 2
 			break
 		case 4:
-			output <- readParameter(&op, firstParameterMode, i+1)
+			channel <- readParameter(&op, firstParameterMode, i+1)
 			i += 2
 			break
 		case 5:
@@ -119,17 +187,17 @@ func runOpcode(op opcode, input chan int) (output chan int) {
 			i += 2
 			break
 		case 99:
-			return output
+			close(channel)
+			return
 		default:
 			log.Fatal("Unknown opcode: ", op.commands[i], " at address: ", i)
 			break
 		}
 	}
-
-	return output
 }
 
 func readParameter(op *opcode, parameterMode, position int) int {
+
 	if parameterMode == 1 {
 		return op.commands[position]
 	}
