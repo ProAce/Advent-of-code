@@ -11,8 +11,10 @@ import (
 )
 
 type amplifier struct {
-	opcode               map[int]int
-	index, input, output int
+	opcode        map[int]int
+	index         int
+	input, output int
+	stopped       bool
 }
 
 func main() {
@@ -39,8 +41,8 @@ func main() {
 			opcode[address] = i
 		}
 
-		for i := range amplifiers {
-			amplifiers = append(amplifiers, amplifier{opcode, 0, 0, 0})
+		for i := 0; i < 5; i++ {
+			amplifiers = append(amplifiers, amplifier{opcode, 0, 0, 0, false})
 		}
 
 		thrust := 0
@@ -54,9 +56,29 @@ func main() {
 				value /= 10
 			}
 
+			for i := range phaseSettings {
+				amplifiers[i].input = phaseSettings[i]
+			}
+
 			if uniqueSlice(phaseSettings) {
-				for {
-					output := 
+				for !amplifiers[4].stopped {
+					amplifiers[0] = runOpcode(amplifiers[0])
+					amplifiers[1].input = amplifiers[0].output
+
+					amplifiers[1] = runOpcode(amplifiers[1])
+					amplifiers[2].input = amplifiers[1].output
+
+					amplifiers[2] = runOpcode(amplifiers[2])
+					amplifiers[3].input = amplifiers[2].output
+
+					amplifiers[3] = runOpcode(amplifiers[3])
+					amplifiers[4].input = amplifiers[3].output
+
+					amplifiers[4] = runOpcode(amplifiers[4])
+					amplifiers[0].input = amplifiers[4].output
+				}
+				if amplifiers[4].output > thrust {
+					thrust = amplifiers[4].output
 				}
 			}
 		}
@@ -74,71 +96,77 @@ func parameter(opcode map[int]int, parameterMode, position int) int {
 	return opcode[opcode[position]]
 }
 
-func runOpcode(opcode map[int]int, input []int) (output int) {
-	i := 0
-	inputCounter := 0
-	for i < len(opcode) {
+func runOpcode(in amplifier) (out amplifier) {
+	i := in.index
+	for i < len(in.opcode) {
 		// True = immediate mode, False = position mode
-		firstParameterMode := (opcode[i] / 100) % 10
-		secondParameterMode := (opcode[i] / 1000) % 10
+		firstParameterMode := (in.opcode[i] / 100) % 10
+		secondParameterMode := (in.opcode[i] / 1000) % 10
 
-		switch opcode[i] % 100 {
+		switch in.opcode[i] % 100 {
 		case 1:
-			opcode[opcode[i+3]] = parameter(opcode, firstParameterMode, i+1) + parameter(opcode, secondParameterMode, i+2)
+			in.opcode[in.opcode[i+3]] = parameter(in.opcode, firstParameterMode, i+1) + parameter(in.opcode, secondParameterMode, i+2)
 			i += 4
 			break
 		case 2:
-			opcode[opcode[i+3]] = parameter(opcode, firstParameterMode, i+1) * parameter(opcode, secondParameterMode, i+2)
+			in.opcode[in.opcode[i+3]] = parameter(in.opcode, firstParameterMode, i+1) * parameter(in.opcode, secondParameterMode, i+2)
 			i += 4
 			break
 		case 3:
-			opcode[opcode[i+1]] = input[inputCounter]
-			inputCounter++
+			in.opcode[in.opcode[i+1]] = in.input
 			i += 2
 			break
 		case 4:
-			output = opcode[opcode[i+1]]
+			output := in.opcode[in.opcode[i+1]]
 			i += 2
-			break
+			return amplifier{
+				opcode: in.opcode,
+				output: output,
+				input:  in.input,
+				index:  i,
+			}
 		case 5:
-			if parameter(opcode, firstParameterMode, i+1) != 0 {
-				i = parameter(opcode, secondParameterMode, i+2)
+			if parameter(in.opcode, firstParameterMode, i+1) != 0 {
+				i = parameter(in.opcode, secondParameterMode, i+2)
 			} else {
 				i += 3
 			}
 			break
 		case 6:
-			if parameter(opcode, firstParameterMode, i+1) == 0 {
-				i = parameter(opcode, secondParameterMode, i+2)
+			if parameter(in.opcode, firstParameterMode, i+1) == 0 {
+				i = parameter(in.opcode, secondParameterMode, i+2)
 			} else {
 				i += 3
 			}
 			break
 		case 7:
-			if parameter(opcode, firstParameterMode, i+1) < parameter(opcode, secondParameterMode, i+2) {
-				opcode[opcode[i+3]] = 1
+			if parameter(in.opcode, firstParameterMode, i+1) < parameter(in.opcode, secondParameterMode, i+2) {
+				in.opcode[in.opcode[i+3]] = 1
 			} else {
-				opcode[opcode[i+3]] = 0
+				in.opcode[in.opcode[i+3]] = 0
 			}
 			i += 4
 			break
 		case 8:
-			if parameter(opcode, firstParameterMode, i+1) == parameter(opcode, secondParameterMode, i+2) {
-				opcode[opcode[i+3]] = 1
+			if parameter(in.opcode, firstParameterMode, i+1) == parameter(in.opcode, secondParameterMode, i+2) {
+				in.opcode[in.opcode[i+3]] = 1
 			} else {
-				opcode[opcode[i+3]] = 0
+				in.opcode[in.opcode[i+3]] = 0
 			}
 			i += 4
 			break
 		case 99:
-			return output
+			return amplifier{
+				output:  in.output,
+				stopped: true,
+			}
 		default:
-			log.Fatal("Unknown opcode: ", opcode[i], " at address: ", i)
+			log.Fatal("Unknown opcode: ", in.opcode[i], " at address: ", i)
 			break
 		}
 	}
 
-	return output
+	return amplifier{}
 }
 
 func uniqueSlice(input []int) bool {
