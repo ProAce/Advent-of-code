@@ -3,7 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -15,9 +19,11 @@ type opcode struct {
 	relativeBase int
 	input        int
 	index        int
+	running      bool
 }
 
-func (o *opcode) runOpcode() (output []int) {
+func (o *opcode) runOpcode() (output int) {
+	o.running = true
 	for {
 		// True = immediate mode, False = position mode
 		firstParameterMode := (o.commands[o.index] / 100) % 10
@@ -35,14 +41,14 @@ func (o *opcode) runOpcode() (output []int) {
 			o.writeParameter(thirdParameterMode, 3, value)
 			o.index += 4
 			break
-		case 3: // the parameter function only works the other way around
+		case 3:
 			o.writeParameter(firstParameterMode, 1, o.input)
 			o.index += 2
 			break
 		case 4:
-			output = append(output, o.readParameter(firstParameterMode, 1))
+			output = o.readParameter(firstParameterMode, 1)
 			o.index += 2
-			break
+			return output
 		case 5:
 			if o.readParameter(firstParameterMode, 1) != 0 {
 				o.index = o.readParameter(secondParameterMode, 2)
@@ -78,6 +84,7 @@ func (o *opcode) runOpcode() (output []int) {
 			o.index += 2
 			break
 		case 99:
+			o.running = false
 			return output
 		default:
 			log.Fatal("Unknown opcode: ", o.commands[o.index], " at address: ", o.index)
@@ -116,8 +123,24 @@ type point struct {
 	x, y int
 }
 
+func (p point) smallerThen(in point) (out point) {
+	if p.x > in.x && p.y < in.y {
+		return p
+	}
+
+	return in
+}
+
+func (p point) biggerThen(in point) (out point) {
+	if p.x < in.x && p.y > in.y {
+		return p
+	}
+
+	return in
+}
+
 type paintRobot struct {
-	opcode    opcode
+	opcode
 	points    map[point]int
 	position  point
 	direction int
@@ -176,6 +199,7 @@ func main() {
 		opcode := opcode{
 			commands:     make(map[int]int),
 			relativeBase: 0,
+			running:      true,
 		}
 
 		for address, codes := range opcodeString {
@@ -190,7 +214,68 @@ func main() {
 			direction: 0,
 		}
 
+		for robot.running {
+			robot.input = robot.points[robot.position]
+
+			output := []int{}
+			for len(output) < 2 {
+				output = append(output, robot.runOpcode())
+			}
+
+			robot.points[robot.position] = output[0]
+			robot.switchDirection(output[1])
+			robot.walkDirection()
+		}
+
 		fmt.Println(len(robot.points))
+
+		robot = paintRobot{
+			opcode:    opcode,
+			points:    make(map[point]int),
+			position:  point{0, 0},
+			direction: 0,
+		}
+
+		robot.points[robot.position] = 1
+
+		for robot.running {
+			robot.input = robot.points[robot.position]
+
+			output := []int{}
+			for len(output) < 2 {
+				output = append(output, robot.runOpcode())
+			}
+
+			robot.points[robot.position] = output[0]
+			robot.switchDirection(output[1])
+			robot.walkDirection()
+		}
+
+		minimum := point{math.MaxInt64, math.MaxInt64}
+		maximum := point{math.MinInt64, math.MinInt64}
+		for key := range robot.points {
+			minimum = key.smallerThen(minimum)
+			maximum = key.biggerThen(maximum)
+		}
+
+		upLeft := image.Point{minimum.x, minimum.y}
+		lowRight := image.Point{maximum.x, maximum.y}
+
+		img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+
+		white := color.White
+		black := color.Black
+
+		for key, value := range robot.points {
+			if value == 1 {
+				img.Set(key.x, key.y, white)
+			} else {
+				img.Set(key.x, key.y, black)
+			}
+		}
+
+		f, _ := os.Create("SolutionDay11Part2.png")
+		png.Encode(f, img)
 	}
 
 	fmt.Println(time.Since(start))
