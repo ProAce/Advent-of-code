@@ -243,8 +243,6 @@ func main() {
 
 		fmt.Println(len(robot.points))
 
-		drawImage(robot, "SolutionPart1.png")
-
 		robot = paintRobot{
 			opcode:    opcode,
 			points:    make(map[point]int),
@@ -274,6 +272,8 @@ func main() {
 	fmt.Println(time.Since(start))
 }
 
+// drawImage creates a shitty represantation of the drawn code. It should be read left to right and not be mirrored
+// Maybe one day I'll make this mess work correctly
 func drawImage(robot paintRobot, name string) {
 	p := []point{}
 
@@ -291,19 +291,20 @@ func drawImage(robot paintRobot, name string) {
 		low = p[i].lowRight(low)
 	}
 
+	offset := point{up.x, low.y}
+
 	for i := range p {
-		p[i].offset(up)
-		p[i].absPoint()
+		p[i].offset(offset)
 	}
 
-	up.offset(up)
-	low.offset(up)
+	up.offset(offset)
+	low.offset(offset)
 	low.absPoint()
 
 	fmt.Println(up, low)
 
-	upLeft := image.Point{up.x, up.y}
-	lowRight := image.Point{low.x, low.y}
+	upLeft := image.Point{up.x + 1, up.y - 1}
+	lowRight := image.Point{low.x + 1, low.y - 1}
 
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 
