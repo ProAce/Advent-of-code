@@ -7,7 +7,6 @@ import (
 	"image/color"
 	"image/png"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -123,20 +122,35 @@ type point struct {
 	x, y int
 }
 
-func (p point) smallerThen(in point) (out point) {
-	if p.x > in.x && p.y < in.y {
+func (p point) upLeft(in point) (out point) {
+	if p.x <= in.x && p.y >= in.y {
 		return p
 	}
 
 	return in
 }
 
-func (p point) biggerThen(in point) (out point) {
-	if p.x < in.x && p.y > in.y {
+func (p point) lowRight(in point) (out point) {
+	if p.x >= in.x && p.y <= in.y {
 		return p
 	}
 
 	return in
+}
+
+func (p *point) offset(offset point) {
+	p.x += offset.x
+	p.y += offset.y
+}
+
+func (p *point) absPoint() {
+	if p.x < 0 {
+		p.x = -(p.x)
+	}
+
+	if p.y < 0 {
+		p.y = -(p.y)
+	}
 }
 
 type paintRobot struct {
@@ -229,6 +243,8 @@ func main() {
 
 		fmt.Println(len(robot.points))
 
+		drawImage(robot, "SolutionPart1.png")
+
 		robot = paintRobot{
 			opcode:    opcode,
 			points:    make(map[point]int),
@@ -251,32 +267,57 @@ func main() {
 			robot.walkDirection()
 		}
 
-		minimum := point{math.MaxInt64, math.MaxInt64}
-		maximum := point{math.MinInt64, math.MinInt64}
-		for key := range robot.points {
-			minimum = key.smallerThen(minimum)
-			maximum = key.biggerThen(maximum)
-		}
+		drawImage(robot, "SolutionPart2.png")
 
-		upLeft := image.Point{minimum.x, minimum.y}
-		lowRight := image.Point{maximum.x, maximum.y}
-
-		img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
-
-		white := color.White
-		black := color.Black
-
-		for key, value := range robot.points {
-			if value == 1 {
-				img.Set(key.x, key.y, white)
-			} else {
-				img.Set(key.x, key.y, black)
-			}
-		}
-
-		f, _ := os.Create("SolutionDay11Part2.png")
-		png.Encode(f, img)
 	}
 
 	fmt.Println(time.Since(start))
+}
+
+func drawImage(robot paintRobot, name string) {
+	p := []point{}
+
+	for key, value := range robot.points {
+		if value == 1 {
+			p = append(p, key)
+		}
+	}
+
+	up := point{0, 0}
+	low := point{0, 0}
+
+	for i := range p {
+		up = p[i].upLeft(up)
+		low = p[i].lowRight(low)
+	}
+
+	for i := range p {
+		p[i].offset(up)
+		p[i].absPoint()
+	}
+
+	up.offset(up)
+	low.offset(up)
+	low.absPoint()
+
+	fmt.Println(up, low)
+
+	upLeft := image.Point{up.x, up.y}
+	lowRight := image.Point{low.x, low.y}
+
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+
+	white := color.White
+	black := color.Black
+
+	for key, value := range robot.points {
+		if value == 1 {
+			img.Set(key.x, key.y, white)
+		} else {
+			img.Set(key.x, key.y, black)
+		}
+	}
+
+	f, _ := os.Create(name)
+	png.Encode(f, img)
 }
