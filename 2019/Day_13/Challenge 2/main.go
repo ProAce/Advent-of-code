@@ -155,11 +155,10 @@ func (s *view) getExtremes() {
 type game struct {
 	opcode
 	view
-	paddle        point
-	ball, oldball point
-	ballDirection int // 0 = topleft, 1 = topright, 2 = bottomright, 3 = bottomleft
-	output        []int
-	score         int
+	paddle point
+	ball   point
+	output []int
+	score  int
 }
 
 func (g *game) runGame() {
@@ -190,7 +189,7 @@ func (g *game) drawScreen() {
 	}
 
 	g.images = append(g.images, img)
-	g.delays = append(g.delays, 25)
+	g.delays = append(g.delays, 1)
 }
 
 func (g *game) generateGIF() {
@@ -203,12 +202,10 @@ func (g *game) generateGIF() {
 }
 
 func (g *game) procesOutput() {
-	scorePoint := point{-1, 0}
-
-	for i := 0; i < len(g.output)-3; i += 3 {
+	for i := 0; i < len(g.output); i += 3 {
 		p := point{g.output[i], g.output[i+1]}
 
-		if p == scorePoint {
+		if p.x == -1 {
 			g.score = g.output[i+2]
 		} else {
 			tile := g.palette[0]
