@@ -10,11 +10,119 @@ import (
 	"time"
 )
 
-type amplifier struct {
-	opcode        map[int]int
-	index         int
-	input, output int
-	stopped       bool
+type opcode struct {
+	commands map[int]int
+
+	relativeBase int
+	index        int
+
+	running bool
+	first   bool
+
+	input int
+	phase int
+}
+
+func (o *opcode) runOpcode() (output int) {
+	o.running = true
+	for {
+		// True = immediate mode, False = position mode
+		firstParameterMode := (o.commands[o.index] / 100) % 10
+		secondParameterMode := (o.commands[o.index] / 1000) % 10
+		thirdParameterMode := (o.commands[o.index] / 10000) % 10
+
+		switch o.commands[o.index] % 100 {
+		case 1:
+			value := o.readParameter(firstParameterMode, 1) + o.readParameter(secondParameterMode, 2)
+			o.writeParameter(thirdParameterMode, 3, value)
+			o.index += 4
+			break
+		case 2:
+			value := o.readParameter(firstParameterMode, 1) * o.readParameter(secondParameterMode, 2)
+			o.writeParameter(thirdParameterMode, 3, value)
+			o.index += 4
+			break
+		case 3:
+			if o.first {
+				o.first = false
+				o.writeParameter(firstParameterMode, 1, o.phase)
+			} else {
+				o.writeParameter(firstParameterMode, 1, o.input)
+			}
+			o.index += 2
+			break
+		case 4:
+			output = o.readParameter(firstParameterMode, 1)
+			o.index += 2
+			return output
+		case 5:
+			if o.readParameter(firstParameterMode, 1) != 0 {
+				o.index = o.readParameter(secondParameterMode, 2)
+			} else {
+				o.index += 3
+			}
+			break
+		case 6:
+			if o.readParameter(firstParameterMode, 1) == 0 {
+				o.index = o.readParameter(secondParameterMode, 2)
+			} else {
+				o.index += 3
+			}
+			break
+		case 7:
+			if o.readParameter(firstParameterMode, 1) < o.readParameter(secondParameterMode, 2) {
+				o.writeParameter(thirdParameterMode, 3, 1)
+			} else {
+				o.writeParameter(thirdParameterMode, 3, 0)
+			}
+			o.index += 4
+			break
+		case 8:
+			if o.readParameter(firstParameterMode, 1) == o.readParameter(secondParameterMode, 2) {
+				o.writeParameter(thirdParameterMode, 3, 1)
+			} else {
+				o.writeParameter(thirdParameterMode, 3, 0)
+			}
+			o.index += 4
+			break
+		case 9:
+			o.relativeBase += o.readParameter(firstParameterMode, 1)
+			o.index += 2
+			break
+		case 99:
+			o.running = false
+			return
+		default:
+			log.Fatal("Unknown opcode: ", o.commands[o.index], " at address: ", o.index)
+			break
+		}
+	}
+}
+
+func (o *opcode) readParameter(parameterMode, position int) int {
+	position += o.index
+	if parameterMode == 1 {
+		return o.commands[position]
+	}
+	if parameterMode == 2 {
+		return o.commands[o.relativeBase+o.commands[position]]
+	}
+
+	return o.commands[o.commands[position]]
+}
+
+func (o *opcode) writeParameter(parameterMode, position, value int) {
+	position += o.index
+	if parameterMode == 1 {
+		o.commands[position] = value
+		return
+	}
+	if parameterMode == 2 {
+		o.commands[o.relativeBase+o.commands[position]] = value
+		return
+	}
+
+	o.commands[o.commands[position]] = value
 }
 
 func main() {
@@ -33,16 +141,11 @@ func main() {
 		line := scanner.Text()
 
 		opcodeString := strings.Split(line, ",")
-		amplifiers := []amplifier{}
-		opcode := make(map[int]int)
+		op := opcode{commands: make(map[int]int)}
 
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
-			opcode[address] = i
-		}
-
-		for i := 0; i < 5; i++ {
-			amplifiers = append(amplifiers, amplifier{opcode, 0, 0, 0, false})
+			op.commands[address] = i
 		}
 
 		thrust := 0
@@ -56,117 +159,41 @@ func main() {
 				value /= 10
 			}
 
-			for i := range phaseSettings {
-				amplifiers[i].input = phaseSettings[i]
-			}
-
 			if uniqueSlice(phaseSettings) {
-				for !amplifiers[4].stopped {
-					amplifiers[0] = runOpcode(amplifiers[0])
-					amplifiers[1].input = amplifiers[0].output
+				fmt.Println(phaseSettings)
 
-					amplifiers[1] = runOpcode(amplifiers[1])
-					amplifiers[2].input = amplifiers[1].output
+				amplifiers := []opcode{}
 
-					amplifiers[2] = runOpcode(amplifiers[2])
-					amplifiers[3].input = amplifiers[2].output
-
-					amplifiers[3] = runOpcode(amplifiers[3])
-					amplifiers[4].input = amplifiers[3].output
-
-					amplifiers[4] = runOpcode(amplifiers[4])
-					amplifiers[0].input = amplifiers[4].output
+				for i := 0; i < 5; i++ {
+					amplifiers = append(amplifiers, op)
 				}
-				if amplifiers[4].output > thrust {
-					thrust = amplifiers[4].output
+
+				for i := range amplifiers {
+					amplifiers[i].phase = phaseSettings[i]
+					amplifiers[i].running = true
+					amplifiers[i].first = true
+				}
+
+				amplifiers[0].input = 0
+
+				for amplifiers[4].running {
+					amplifiers[1].input = amplifiers[0].runOpcode()
+					amplifiers[2].input = amplifiers[1].runOpcode()
+					amplifiers[3].input = amplifiers[2].runOpcode()
+					amplifiers[4].input = amplifiers[3].runOpcode()
+					amplifiers[0].input = amplifiers[4].runOpcode()
+				}
+
+				if amplifiers[0].input > thrust {
+					thrust = amplifiers[0].input
 				}
 			}
 		}
+
 		fmt.Println(thrust)
 	}
 
 	fmt.Println(time.Since(start))
-}
-
-func parameter(opcode map[int]int, parameterMode, position int) int {
-	if parameterMode == 1 {
-		return opcode[position]
-	}
-
-	return opcode[opcode[position]]
-}
-
-func runOpcode(in amplifier) (out amplifier) {
-	i := in.index
-	for i < len(in.opcode) {
-		// True = immediate mode, False = position mode
-		firstParameterMode := (in.opcode[i] / 100) % 10
-		secondParameterMode := (in.opcode[i] / 1000) % 10
-
-		switch in.opcode[i] % 100 {
-		case 1:
-			in.opcode[in.opcode[i+3]] = parameter(in.opcode, firstParameterMode, i+1) + parameter(in.opcode, secondParameterMode, i+2)
-			i += 4
-			break
-		case 2:
-			in.opcode[in.opcode[i+3]] = parameter(in.opcode, firstParameterMode, i+1) * parameter(in.opcode, secondParameterMode, i+2)
-			i += 4
-			break
-		case 3:
-			in.opcode[in.opcode[i+1]] = in.input
-			i += 2
-			break
-		case 4:
-			output := in.opcode[in.opcode[i+1]]
-			i += 2
-			return amplifier{
-				opcode: in.opcode,
-				output: output,
-				input:  in.input,
-				index:  i,
-			}
-		case 5:
-			if parameter(in.opcode, firstParameterMode, i+1) != 0 {
-				i = parameter(in.opcode, secondParameterMode, i+2)
-			} else {
-				i += 3
-			}
-			break
-		case 6:
-			if parameter(in.opcode, firstParameterMode, i+1) == 0 {
-				i = parameter(in.opcode, secondParameterMode, i+2)
-			} else {
-				i += 3
-			}
-			break
-		case 7:
-			if parameter(in.opcode, firstParameterMode, i+1) < parameter(in.opcode, secondParameterMode, i+2) {
-				in.opcode[in.opcode[i+3]] = 1
-			} else {
-				in.opcode[in.opcode[i+3]] = 0
-			}
-			i += 4
-			break
-		case 8:
-			if parameter(in.opcode, firstParameterMode, i+1) == parameter(in.opcode, secondParameterMode, i+2) {
-				in.opcode[in.opcode[i+3]] = 1
-			} else {
-				in.opcode[in.opcode[i+3]] = 0
-			}
-			i += 4
-			break
-		case 99:
-			return amplifier{
-				output:  in.output,
-				stopped: true,
-			}
-		default:
-			log.Fatal("Unknown opcode: ", in.opcode[i], " at address: ", i)
-			break
-		}
-	}
-
-	return amplifier{}
 }
 
 func uniqueSlice(input []int) bool {
