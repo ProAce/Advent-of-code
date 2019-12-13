@@ -70,7 +70,7 @@ func main() {
 
 	fmt.Println(center, maximumLength)
 
-	coordinate := anihilateAsteroids(angleMap, center, 299) // Check which is the 200th asteroid to be destroyed
+	coordinate := anihilateAsteroids(angleMap, center, 200) // Check which is the 200th asteroid to be destroyed
 
 	fmt.Println(coordinate)
 
