@@ -16,8 +16,8 @@ type opcode struct {
 	relativeBase int
 	index        int
 
-	running bool
-	first   bool
+	running    bool
+	firstStart bool
 
 	input int
 	phase int
@@ -43,8 +43,8 @@ func (o *opcode) runOpcode() (output int) {
 			o.index += 4
 			break
 		case 3:
-			if o.first {
-				o.first = false
+			if o.firstStart {
+				o.firstStart = false
 				o.writeParameter(firstParameterMode, 1, o.phase)
 			} else {
 				o.writeParameter(firstParameterMode, 1, o.input)
@@ -142,6 +142,7 @@ func main() {
 
 		opcodeString := strings.Split(line, ",")
 		op := opcode{commands: make(map[int]int)}
+		backup := op
 
 		for address, codes := range opcodeString {
 			i, _ := strconv.Atoi(codes)
@@ -149,7 +150,7 @@ func main() {
 		}
 
 		thrust := 0
-		// Check every combination of 0 to 4 for the phase
+		// Check every combination of 5 to 9 for the phase
 		for j := 56789; j <= 98765; j++ {
 			phaseSettings := []int{}
 			value := j
@@ -159,22 +160,24 @@ func main() {
 				value /= 10
 			}
 
+			amplifiers := []opcode{}
+
+			for i := 0; i < 5; i++ { // Create 5 new amplifiers
+				amplifiers = append(amplifiers, op)
+			}
+
 			if uniqueSlice(phaseSettings) {
+
 				fmt.Println(phaseSettings)
 
-				amplifiers := []opcode{}
-
-				for i := 0; i < 5; i++ {
-					amplifiers = append(amplifiers, op)
-				}
-
-				for i := range amplifiers {
+				for i := range amplifiers { // Set the correct settings
+					amplifiers[i] = backup
 					amplifiers[i].phase = phaseSettings[i]
 					amplifiers[i].running = true
-					amplifiers[i].first = true
+					amplifiers[i].firstStart = true
 				}
 
-				amplifiers[0].input = 0
+				fmt.Println(amplifiers[1])
 
 				for amplifiers[4].running {
 					amplifiers[1].input = amplifiers[0].runOpcode()
@@ -183,6 +186,8 @@ func main() {
 					amplifiers[4].input = amplifiers[3].runOpcode()
 					amplifiers[0].input = amplifiers[4].runOpcode()
 				}
+
+				fmt.Println(amplifiers[0].input)
 
 				if amplifiers[0].input > thrust {
 					thrust = amplifiers[0].input
