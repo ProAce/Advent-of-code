@@ -19,11 +19,12 @@ type opcode struct {
 	running    bool
 	firstStart bool
 
-	input int
-	phase int
+	input  int
+	output int
+	phase  int
 }
 
-func (o *opcode) runOpcode() (output int) {
+func (o *opcode) runOpcode() {
 	o.running = true
 	for {
 		// True = immediate mode, False = position mode
@@ -52,9 +53,9 @@ func (o *opcode) runOpcode() (output int) {
 			o.index += 2
 			break
 		case 4:
-			output = o.readParameter(firstParameterMode, 1)
+			o.output = o.readParameter(firstParameterMode, 1)
 			o.index += 2
-			return output
+			return
 		case 5:
 			if o.readParameter(firstParameterMode, 1) != 0 {
 				o.index = o.readParameter(secondParameterMode, 2)
@@ -125,6 +126,11 @@ func (o *opcode) writeParameter(parameterMode, position, value int) {
 	o.commands[o.commands[position]] = value
 }
 
+type amplifier struct {
+	op     opcode
+	backup opcode
+}
+
 func main() {
 	start := time.Now()
 
@@ -160,37 +166,38 @@ func main() {
 				value /= 10
 			}
 
-			amplifiers := []opcode{}
+			amplifiers := []amplifier{}
 
 			for i := 0; i < 5; i++ { // Create 5 new amplifiers
-				amplifiers = append(amplifiers, op)
+				amplifiers = append(amplifiers, amplifier{
+					op:     op,
+					backup: op,
+				})
 			}
 
 			if uniqueSlice(phaseSettings) {
-
-				fmt.Println(phaseSettings)
-
 				for i := range amplifiers { // Set the correct settings
-					amplifiers[i] = backup
-					amplifiers[i].phase = phaseSettings[i]
-					amplifiers[i].running = true
-					amplifiers[i].firstStart = true
+					amplifiers[i].op = backup
+					amplifiers[i].op.phase = phaseSettings[i]
+					amplifiers[i].op.running = true
+					amplifiers[i].op.firstStart = true
 				}
 
-				fmt.Println(amplifiers[1])
-
-				for amplifiers[4].running {
-					amplifiers[1].input = amplifiers[0].runOpcode()
-					amplifiers[2].input = amplifiers[1].runOpcode()
-					amplifiers[3].input = amplifiers[2].runOpcode()
-					amplifiers[4].input = amplifiers[3].runOpcode()
-					amplifiers[0].input = amplifiers[4].runOpcode()
+				for amplifiers[4].op.running {
+					amplifiers[0].op.runOpcode()
+					amplifiers[1].op.input = amplifiers[0].op.output
+					amplifiers[1].op.runOpcode()
+					amplifiers[2].op.input = amplifiers[1].op.output
+					amplifiers[2].op.runOpcode()
+					amplifiers[3].op.input = amplifiers[2].op.output
+					amplifiers[3].op.runOpcode()
+					amplifiers[4].op.input = amplifiers[3].op.output
+					amplifiers[4].op.runOpcode()
+					amplifiers[0].op.input = amplifiers[4].op.output
 				}
 
-				fmt.Println(amplifiers[0].input)
-
-				if amplifiers[0].input > thrust {
-					thrust = amplifiers[0].input
+				if amplifiers[4].op.output > thrust {
+					thrust = amplifiers[4].op.output
 				}
 			}
 		}
