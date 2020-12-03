@@ -38,20 +38,15 @@ func part2(input [][]bool) int {
 func calculatingHitTrees(input [][]bool, right int, down int) int {
 	indexY, indexX, treesHit := 0, 0, 0
 
-	for true {
-		if indexX >= len(input[0]) {
-			indexX -= len(input[0])
-		}
+	width := len(input[0])
 
-		if indexY >= len(input) {
-			break
-		}
-
+	for indexY < len(input) {
 		if input[indexY][indexX] == true {
 			treesHit++
 		}
 
 		indexX += right
+		indexX %= width
 		indexY += down
 	}
 
