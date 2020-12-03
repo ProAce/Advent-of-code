@@ -21,11 +21,11 @@ func main() {
 	fmt.Println(time.Since(start))
 }
 
-func part1(input [][]bool) int {
+func part1(input []string) int {
 	return calculatingHitTrees(input, 3, 1)
 }
 
-func part2(input [][]bool) int {
+func part2(input []string) int {
 	output := calculatingHitTrees(input, 1, 1)
 	output *= calculatingHitTrees(input, 3, 1)
 	output *= calculatingHitTrees(input, 5, 1)
@@ -35,13 +35,13 @@ func part2(input [][]bool) int {
 	return output
 }
 
-func calculatingHitTrees(input [][]bool, right int, down int) int {
+func calculatingHitTrees(input []string, right int, down int) int {
 	indexY, indexX, treesHit := 0, 0, 0
 
 	width := len(input[0])
 
 	for indexY < len(input) {
-		if input[indexY][indexX] == true {
+		if input[indexY][indexX] == '#' {
 			treesHit++
 		}
 
@@ -53,7 +53,7 @@ func calculatingHitTrees(input [][]bool, right int, down int) int {
 	return treesHit
 }
 
-func getInput(path string) [][]bool {
+func getInput(path string) []string {
 	inputFile, err := os.Open(path)
 
 	if err != nil {
@@ -64,23 +64,13 @@ func getInput(path string) [][]bool {
 
 	scanner := bufio.NewScanner(inputFile)
 
-	var input [][]bool
+	var input []string
 
 	// Get the input values from the text file and store them in a slice.
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		var tempLine []bool
-
-		for _, value := range line {
-			temp := false
-			if value == '#' {
-				temp = true
-			}
-			tempLine = append(tempLine, temp)
-		}
-
-		input = append(input, tempLine)
+		input = append(input, line)
 	}
 
 	return input
