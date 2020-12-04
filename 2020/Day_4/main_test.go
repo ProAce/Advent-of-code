@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestCheckHcl(t *testing.T) {
-	tests := map[string]bool{"#123abc": true, "#123abz": false, "123abc": false}
+	tests := map[string]bool{"#123abc": true, "#123abz": false, "123abc": false, "#abc1234": false}
 
 	for input, outcome := range tests {
 		if checkHcl(input) != outcome {
@@ -13,7 +13,7 @@ func TestCheckHcl(t *testing.T) {
 }
 
 func TestCheckPid(t *testing.T) {
-	tests := map[string]bool{"000000001": true, "0123456789": false}
+	tests := map[string]bool{"000000001": true, "0123456789": false, "a12345678": false}
 
 	for input, outcome := range tests {
 		if checkPid(input) != outcome {
@@ -43,7 +43,7 @@ func TestCheckHgt(t *testing.T) {
 }
 
 func TestCheckByr(t *testing.T) {
-	tests := map[string]bool{"2002": true, "2003": false, "1920": true, "1919": false}
+	tests := map[string]bool{"2002": true, "2003": false, "1920": true, "1919": false, "2147483648": false}
 
 	for input, outcome := range tests {
 		if checkByr(input) != outcome {
