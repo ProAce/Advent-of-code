@@ -113,7 +113,7 @@ func checkHgt(input string) bool {
 }
 
 func checkHcl(input string) bool {
-	valid, _ := regexp.MatchString(`(#[a-f0-9]{6})`, input)
+	valid, _ := regexp.MatchString(`(^#[a-f0-9]{6}$)`, input)
 	return valid
 }
 
@@ -123,7 +123,8 @@ func checkEcl(input string) bool {
 }
 
 func checkPid(input string) bool {
-	return len(input) == 9
+	valid, _ := regexp.MatchString(`(^[0-9]{9}$)`, input)
+	return valid
 }
 
 func getInput(path string) []map[string]string {
