@@ -29,8 +29,10 @@ func checkValidity(input []map[string]string) (int, int) {
 	invalidPasswordsP1 := 0
 	invalidPasswordsP2 := 0
 
+	// Loop over all the passports.
 	for _, value := range input {
 		validity := true
+		// Check all the requirements of the password.
 		for _, key := range requirements {
 			if _, ok := value[key]; !ok {
 				invalidPasswordsP1++
@@ -116,23 +118,12 @@ func checkHcl(input string) bool {
 }
 
 func checkEcl(input string) bool {
-	options := []string{"amb", "blu", "brn", "gry", "grn", "hzl", "oth"}
-	valid := false
-
-	for _, value := range options {
-		if input == value {
-			valid = true
-		}
-	}
-
+	valid, _ := regexp.MatchString(`(amb|blu|brn|gry|grn|hzl|oth)\b`, input)
 	return valid
 }
 
 func checkPid(input string) bool {
-	if len(input) == 9 {
-		return true
-	}
-	return false
+	return len(input) == 9
 }
 
 func getInput(path string) []map[string]string {

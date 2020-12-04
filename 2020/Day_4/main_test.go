@@ -23,7 +23,7 @@ func TestCheckPid(t *testing.T) {
 }
 
 func TestCheckEcl(t *testing.T) {
-	tests := map[string]bool{"brn": true, "wat": false}
+	tests := map[string]bool{"brn": true, "wat": false, "brnb": false}
 
 	for input, outcome := range tests {
 		if checkEcl(input) != outcome {
