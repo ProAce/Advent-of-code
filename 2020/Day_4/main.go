@@ -36,6 +36,7 @@ func checkValidity(input []map[string]string) (int, int) {
 		for _, key := range requirements {
 			if _, ok := value[key]; !ok {
 				invalidPasswordsP1++
+				validity = false
 				break
 			}
 
@@ -75,7 +76,7 @@ func checkValidity(input []map[string]string) (int, int) {
 		}
 	}
 
-	return (len(input) - invalidPasswordsP1), (len(input) - (invalidPasswordsP1 + invalidPasswordsP2))
+	return (len(input) - invalidPasswordsP1), (len(input) - invalidPasswordsP2)
 }
 
 func checkDigits(input string, min, max int) bool {
