@@ -69,32 +69,14 @@ func getInput(path string) []int {
 }
 
 func parseSeat(input string) int {
-	minRow, maxRow := 0, 127
-	minColumn, maxColumn := 0, 7
-	id := 0
+	output := 0
+	length := len(input) - 1
 
-	// Parse the row values
-	for i := 0; i < 7; i++ {
-		if input[i] == 'F' {
-			maxRow -= (64 >> i)
-		} else if input[i] == 'B' {
-			minRow += (64 >> i)
-		} else {
-			log.Fatalf("Unexpected input: &s, at position: %d, in string: %s", input[i], i, input)
+	for index, value := range input {
+		if (value == 'B') || (value == 'R') {
+			output |= 1 << (length - index)
 		}
 	}
 
-	for i := 0; i < 3; i++ {
-		if input[i+7] == 'L' {
-			maxColumn -= (4 >> i)
-		} else if input[i+7] == 'R' {
-			minColumn += (4 >> i)
-		} else {
-			log.Fatalf("Unexpected input: &s, at position: %d, in string: %s", input[i], i, input)
-		}
-	}
-
-	id = minRow*8 + minColumn
-
-	return id
+	return output
 }
