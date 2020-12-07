@@ -15,6 +15,11 @@ type bag struct {
 	capacity map[string]int
 }
 
+type content struct {
+	color  string
+	amount int
+}
+
 func main() {
 	start := time.Now()
 
@@ -29,7 +34,7 @@ func main() {
 	fmt.Println(time.Since(start))
 }
 
-func part1(input []bag) int {
+func part1(input map[string][]content) int {
 	output := make(map[string]int)
 
 	secondaryInput := whichBagCanContain(input, "shiny gold")
@@ -62,17 +67,15 @@ func part1(input []bag) int {
 	return len(output)
 }
 
-func part2(input []bag) int {
-	count := 0
-
-	return count
+func part2(input map[string][]content) int {
+	return countContents(input, "shiny gold")
 }
 
-func whichBagCanContain(input []bag, color string) (output []string) {
-	for _, value := range input {
-		for key := range value.capacity {
-			if key == color {
-				output = append(output, value.color)
+func whichBagCanContain(input map[string][]content, color string) (output []string) {
+	for key, value := range input {
+		for _, content := range value {
+			if color == content.color {
+				output = append(output, key)
 			}
 		}
 	}
@@ -80,7 +83,17 @@ func whichBagCanContain(input []bag, color string) (output []string) {
 	return output
 }
 
-func getInput(path string) []bag {
+func countContents(input map[string][]content, color string) int {
+	count := 0
+
+	for _, value := range input[color] {
+		count += value.amount + (value.amount * countContents(input, value.color))
+	}
+
+	return count
+}
+
+func getInput(path string) map[string][]content {
 	inputFile, err := os.Open(path)
 
 	if err != nil {
@@ -91,7 +104,7 @@ func getInput(path string) []bag {
 
 	scanner := bufio.NewScanner(inputFile)
 
-	var output []bag
+	output := make(map[string][]content)
 
 	// Get the input values from the text file and store them in a slice.
 	for scanner.Scan() {
@@ -100,7 +113,7 @@ func getInput(path string) []bag {
 		partRules := strings.Split(line, " contain ")
 		color := strings.TrimSuffix(partRules[0], " bags")
 
-		capacity := make(map[string]int)
+		var capacity []content
 
 		if partRules[1] != "no other bags." {
 			contents := strings.Split(partRules[1], ", ")
@@ -110,11 +123,11 @@ func getInput(path string) []bag {
 				numberOfBags, _ := strconv.Atoi(words[0])
 				temp := strings.Split(words[1], " ")
 				bagColor := temp[0] + " " + temp[1]
-				capacity[bagColor] = numberOfBags
+				capacity = append(capacity, content{bagColor, numberOfBags})
 			}
 		}
 
-		output = append(output, bag{color, capacity})
+		output[color] = capacity
 	}
 
 	return output
