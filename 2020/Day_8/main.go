@@ -30,94 +30,59 @@ func main() {
 }
 
 func part1(input []opcode) int {
-	accumulator := 0
-	pointer := 0
-
-	executedCommands := make(map[int]int)
-
-	for true {
-		if _, ok := executedCommands[pointer]; ok {
-			break // If we have executed this command before than break
-		}
-
-		executedCommands[pointer]++
-
-		switch input[pointer].operation {
-		case "nop":
-			pointer++
-		case "acc":
-			accumulator += input[pointer].value
-			pointer++
-		case "jmp":
-			pointer += input[pointer].value
-		}
-	}
+	accumulator, _ := runOpCode(input)
 
 	return accumulator
 }
 
 func part2(input []opcode) int {
+	changePointer := -1
+	changedToNop := false
+
+	// Find the first operation we can change to test if that fixes the bootloop.
+	for true {
+		for i := changePointer + 1; i < len(input); i++ {
+			if input[i].operation == "nop" {
+				changedToNop = false
+				changePointer = i
+				input[i].operation = "jmp"
+				break
+			}
+
+			if input[i].operation == "jmp" {
+				changedToNop = true
+				changePointer = i
+				input[i].operation = "nop"
+				break
+			}
+		}
+		accumulator, endState := runOpCode(input)
+
+		if endState == 0 {
+			return accumulator
+		}
+
+		if changedToNop {
+			input[changePointer].operation = "jmp"
+		} else {
+			input[changePointer].operation = "nop"
+		}
+	}
+
+	return 0
+}
+
+func runOpCode(input []opcode) (int, int) {
 	accumulator := 0
+	endState := 0
 	pointer := 0
 
 	executedCommands := make(map[int]int)
 
-	changePointer := 0
-	changedToNop := false
-
-	// Find the first operation we can change to test if that fixes the bootloop.
-	for i := changePointer; i < len(input); i++ {
-		if input[i].operation == "nop" {
-			changedToNop = false
-			changePointer = i
-			input[i].operation = "jmp"
-			break
-		}
-
-		if input[i].operation == "jmp" {
-			changedToNop = true
-			changePointer = i
-			input[i].operation = "nop"
-			break
-		}
-	}
-
 	for true {
-		// If the command has been executed before we have found an infinite loop.
-		// Reset the last operation we changed and start over again.
 		if _, ok := executedCommands[pointer]; ok {
-			// Change back the last operation we changed
-			if changedToNop {
-				input[changePointer].operation = "jmp"
-			} else {
-				input[changePointer].operation = "nop"
-			}
-
-			// Find the next operation to change
-			for i := changePointer + 1; i < len(input); i++ {
-				if input[i].operation == "nop" {
-					changedToNop = false
-					changePointer = i
-					input[i].operation = "jmp"
-					break
-				}
-
-				if input[i].operation == "jmp" {
-					changedToNop = true
-					changePointer = i
-					input[i].operation = "nop"
-					break
-				}
-
-				if changePointer >= len(input) {
-					break // Terminate when the pointer is beyond the scope of the given program.
-				}
-			}
-
-			accumulator = 0                      // Reset the accumulator
-			pointer = 0                          // Reset the pointer to the beginning of the program
-			executedCommands = make(map[int]int) // Reset the executed commands map
-			continue
+			endState = 1 // Infinite loop
+			break        // If we have executed this command before than break
 		}
 
 		executedCommands[pointer]++
@@ -137,7 +102,7 @@ func part2(input []opcode) int {
 		}
 	}
 
-	return accumulator
+	return accumulator, endState
 }
 
 func getInput(path string) []opcode {
