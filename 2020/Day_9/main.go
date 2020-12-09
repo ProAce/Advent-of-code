@@ -62,46 +62,38 @@ func part1(input []int) (int, int) {
 
 func part2(input []int, solutionPart1 int, index int) int {
 	// Up until the index, find the first group of inputs that adds up to the first invalid number.
-	for i := 0; i < index; i++ {
-		sum := 0
+	sum := input[0]
+	begin, end := 0, 0
 
-		for j := i; j < index; j++ {
-			sum += input[j]
-
-			if sum > solutionPart1 {
-				break
-			} else if sum == solutionPart1 {
-				// If we have found the group of inputs, add up the highest and lowest value in that range.
-				return findLowest(input[i:j+1]) + findHighest(input[i:j+1])
-			}
+	for sum != solutionPart1 {
+		if sum < solutionPart1 {
+			end++
+			sum += input[end]
+		} else if sum > solutionPart1 {
+			sum -= input[begin]
+			begin++
 		}
 	}
 
-	return 0
+	low, high := findExtremes(input[begin : end+1])
+	return low + high
 }
 
-func findLowest(input []int) int {
+func findExtremes(input []int) (int, int) {
 	lowest := math.MaxInt64
+	highest := 0
 
 	for _, value := range input {
 		if value < lowest {
 			lowest = value
 		}
-	}
 
-	return lowest
-}
-
-func findHighest(input []int) int {
-	highest := 0
-
-	for _, value := range input {
 		if value > highest {
 			highest = value
 		}
 	}
 
-	return highest
+	return lowest, highest
 }
 
 func getInput(path string) []int {
