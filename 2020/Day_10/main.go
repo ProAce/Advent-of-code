@@ -15,20 +15,21 @@ func main() {
 
 	input := getInput("input.txt")
 
+	// Sort the input once.
+	sort.Slice(input, func(a, b int) bool {
+		return input[a] < input[b]
+	})
+
 	part1 := part1(input)
-	// part2 := part2(input, part1, index)
+	part2 := part2(input)
 
 	fmt.Printf("Part 1: %d\r\n", part1)
-	// fmt.Printf("Part 2: %d\r\n", part2)
+	fmt.Printf("Part 2: %d\r\n", part2)
 
 	fmt.Println(time.Since(start))
 }
 
 func part1(input []int) int {
-	sort.Slice(input, func(a, b int) bool {
-		return input[a] < input[b]
-	})
-
 	diff1 := 0
 	diff3 := 1 // Your device has a 3 jolt difference to the last adapter
 
