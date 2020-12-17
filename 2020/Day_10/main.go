@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -15,13 +16,23 @@ func main() {
 
 	input := getInput("input.txt")
 
+	input = append(input, 0) // Add outlet
+
 	// Sort the input once.
 	sort.Slice(input, func(a, b int) bool {
 		return input[a] < input[b]
 	})
 
-	part1 := part1(input)
-	part2 := part2(input)
+	input = append(input, input[len(input)-1]+3) // Add device
+
+	difference := make([]int, 0)
+
+	for i := 0; i < len(input)-1; i++ {
+		difference = append(difference, input[i+1]-input[i])
+	}
+
+	part1 := part1(difference)
+	part2 := part2(difference)
 
 	fmt.Printf("Part 1: %d\r\n", part1)
 	fmt.Printf("Part 2: %d\r\n", part2)
@@ -30,21 +41,13 @@ func main() {
 }
 
 func part1(input []int) int {
-	diff1 := 0
-	diff3 := 1 // Your device has a 3 jolt difference to the last adapter
+	diff1, diff3 := 0, 0
 
-	if input[0] == 1 {
-		diff1++
-	}
-
-	for i := 0; i < len(input)-1; i++ {
-		switch input[i+1] - input[i] {
-		case 1:
+	for _, value := range input {
+		if value == 1 {
 			diff1++
-			break
-		case 3:
+		} else if value == 3 {
 			diff3++
-			break
 		}
 	}
 
@@ -52,8 +55,28 @@ func part1(input []int) int {
 }
 
 func part2(input []int) int {
+	groups := make(map[int]float64)
 
-	return 0
+	for i := 0; i < len(input); i++ {
+		count := recursiveSearch(input, i, 0)
+
+		if count != 0 {
+			i += count - 1
+		}
+
+		groups[count]++
+	}
+
+	result := math.Pow(1, groups[1]) * math.Pow(2, groups[2]) * math.Pow(4, groups[3]) * math.Pow(7, groups[4])
+	return int(result)
+}
+
+func recursiveSearch(input []int, index int, count int) int {
+	if input[index] == 1 {
+		count = recursiveSearch(input, index+1, count+1)
+	}
+
+	return count
 }
 
 func getInput(path string) []int {
